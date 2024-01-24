@@ -16,8 +16,6 @@ Y=Y1+Y2+Y3;
 
 exsE=find(Y>tlyrU & A==1); %accretion past the limit
 exsD=find(Y<tlyrD & A==1); %erosion past the limit
-%exsE=find(Y>tlyrU); %accretion past the limit
-%exsD=find(Y<tlyrD); %erosion past the limit
     
 
 

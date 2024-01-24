@@ -1,22 +1,48 @@
-function [U,Ux,Uy,q,P]=flowBasin(A,MANN,h,ho,d,dx,DH,T,periodic,kro);
+function [U,Ux,Uy,U1,Um1,UN,UmN]=flowBasin(A,MANN,h,ho,dx,DH,T,periodic,kro,tidalnonlinearflow,Ubase);
+BAD
+%cells 10 to 19 are river boundaries
+
+% %added may 2019 to reduce compuation. check that doesnot mes sup
+% A(ho<=0)=0; %eliminate the cells in which the water depth is too small
+% 
 
 
 
 %A(A==11)=1; %the river front cells are normal cells
 
-Uo=1;
+%Uo=max(0.1,sqrt(9.8*h)*0.1);
+%manning=0*A+n_manning;
 
 A(A==22)=1;  %this behaves as normal flow %but do not update A!
 %consider the pond cells as A==0
 A(A==3)=1; %the isoalted pond behaves as normal cell (btu different depth...) %but do not update A!
 
+% hfriction;
+% csi=hfriction.^(1/3)./manning.^2./Uo*24*3600;
+% D=csi.*hfriction.^2/(dx^2);
 
+if tidalnonlinearflow==1
+Uo=(Ubase+0.2)/2;
+else
+Uo=1;
+end
+
+%figure;imagesc(MANN);pause
 MANN(isnan(MANN))=0.1;%
 csi=h.^(1/3)./MANN.^2./Uo*24*3600;
+%csi=1./MANN.^2./Uo*24*3600;
 
+%fM=1+A*0;fM(VEG==1)=1/facMann^2;
+
+
+%csi(VEG==1)=csi(VEG==1)./(facMann*B(VEG==1)).^2;
+
+
+%csi=A*0+45^2/Uo*24*3600;
 D=csi.*h.^2/(dx^2);
 
-G=0*d;a=find(A~=0);NN=length(a);G(a)=[1:NN];
+G=0*h;a=find(A~=0);NN=length(a);G(a)=[1:NN];
+%rhs=ones(NN,1).*min(DH,max(0,d(a)))/(T/2*3600*24); %in m/s!!!
 rhs=ones(NN,1).*DH(a)/(T/2*3600*24); %in m/s!!!
 
 [N,M] = size(G);i=[];j=[];s=[];
@@ -27,7 +53,7 @@ i=[i;G(a)]; j=[j;G(a)]; s=[s;ones(size(a))];rhs(G(a))=0;%water level zero
 
 S=0*G;
 %exclude the NOLAND CELLS (A==0)
-p = find(A==1 | A==10);[row col]=ind2sub(size(A),p);
+p = find(A==1 | (A>=10 & A<=19));[row col]=ind2sub(size(A),p);
 for k = [N -1 1 -N]
 
 %avoid to the the cells out of the domain (risk to make it periodic...)
@@ -44,6 +70,9 @@ a=a(A(q(a))>0);%exlcude the translated cell that are NOLAND cells
 
 DD=(D(p(a))+D(q(a)))/2;%.*(fM(p(a))+fM(q(a)))/2; %THA BEST!!!! BESTA! WITH THIS MORE STABLE
 
+%DD=min(D(p(a)),D(q(a))); %ABSOLUTO NO!!!!
+%DD=max(D(p(a)),D(q(a))); %OK
+
 S(p(a))=S(p(a))+DD; %exit from that cell
 i=[i;G(q(a))]; j=[j;G(p(a))]; s=[s;-DD]; %gain from the neigborh cell
 end
@@ -59,8 +88,10 @@ P(A==2)=0;  %need when swtinching q and p
 
 
 D=D./h*dx;
-Ux=0*A;Uy=0*A;
+%D=D*dx;
+
 U1=0*A;Um1=0*A;UN=0*A;UmN=0*A;
+
 p = find(A==1 | A==10 | A==2);[row col]=ind2sub(size(A),p);
 for k = [N -1 1 -N]
 %the translated cell
@@ -71,6 +102,7 @@ elseif periodic==1;
 end
 
 a=a(A(q(a))>0);%exlcude the translated cell that are NOLAND cells
+%DD=(D(p(a))+D(q(a)))/2;
 DD=min(D(p(a)),D(q(a)));%.*(fM(p(a))+fM(q(a)))/2; MEGLIO
 
 
@@ -82,20 +114,16 @@ end
 
 end
 
-
 Uy=max(abs(U1),abs(Um1)).*sign(U1+Um1);
 Ux=max(abs(UN),abs(UmN)).*sign(UN+UmN);
 
-
-
 U=sqrt(Ux.^2+Uy.^2);
-q=U.*h;
 
 
 
 
 
-
+%%%
 
 
 % %%%%%%%%%%%%%%%%%

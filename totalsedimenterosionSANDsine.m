@@ -1,46 +1,70 @@
-function [E,Ceq]=totalsedimenterosionSANDsine(h,hlimC,U,ss,d50,ws,fTide,UR,fMFriver,kro,MANN,VEG,Uwave,wavePERIOD);
+function [E,Ceq]=totalsedimenterosionSANDsine(h,hlimC,kro,MannS,rho,rhos,ss,d50,ws,fTide,computetidalcurrent,U,FcrUT,calculateshallowflow,US,hS,nSHALLOW,computeriver,UR,fMFriver);
 g=9.81;
-rho=1030;
-rhos=2650;
+%nSHALLOW=1;
+%hlimiterChezy=1;
+%h=max(h,hlimiterChezy);%NEW February 2023
+%Chezy=max(h,hlimC).^(1/6)./MannS;
 
-manning=0.02;
-Chezy=h.^(1/6)./manning;
+
+Chezy=h.^(1/6)./MannS;
+%Chezy=1./MannS;
 
 
-% %Tides
-% ncyc=10;
-% Ceq_tide=0;
-% for i=0:ncyc
-% Ui=U*pi/2*sin(i/ncyc*pi/2);
-% %Ui(Ui<0.2)=0;
-% Ceq_tidei=0.05*Ui.^4./max(hlimC,h)./(sqrt(g).*Chezy.^3*ss^2*d50)*rhos; %kg/m/s%%
-% %Ceq_tidei=0.05*Ui.^4./20./(sqrt(g).*Chezy.^3*ss^2*d50)*rhos; %kg/m/s%
-% Ceq_tide=Ceq_tide+1/(ncyc+1)*Ceq_tidei;
-% end
-% 
 
-%Tides
+
+%Tides%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+if computetidalcurrent==1
+UTmax=FcrUT*sqrt(9.8*h);
 ncyc=10;
 Ceq_tide=0;
 for i=0:ncyc
 Ui=U*pi/2*sin(i/ncyc*pi/2);
-%Ui(Ui<0.2)=0;
-Ceq_tidei=Ui.^4; %kg/m/s
+Ui=min(Ui,UTmax);
+Ceq_tidei=0.05*Ui.^4./max(hlimC,h)./(sqrt(g).*Chezy.^3*ss^2*d50)*rhos; %kg/m/s
 Ceq_tide=Ceq_tide+1/(ncyc+1)*Ceq_tidei;
 end
-Ceq_tide=0.05*Ceq_tide./max(hlimC,h)./(sqrt(g).*Chezy.^3*ss^2*d50)*rhos;
+else
+Ceq_tide=0;  
+end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-%River
-Ceq_river=0.05*UR.^4./h./(sqrt(g).*Chezy.^3*ss^2*d50)*rhos*fMFriver.*fTide;
+
+%Shallow tidal flow%%%%%%%%%%%%%%%%
+if calculateshallowflow==1
+Chezy=hS.^(1/6)./MannS;
+%Chezy=1./MannS;
+Ceq_tideS=1/nSHALLOW *0.05*US.^4./max(hlimC,hS)./(sqrt(g).*Chezy.^3*ss^2*d50)*rhos;
+%Ceq_tideS=1/nSHALLOW *0.05*US.^4./max(hlimC,h)./(sqrt(g).*Chezy.^3*ss^2*d50)*rhos;
+else
+Ceq_tideS=0;
+end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-Ceq =Ceq_tide+Ceq_river;
+
+%River%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+if computeriver==1
+FcrUR=0.5;
+%hh=max(h,0.1);
+UR=min(UR,FcrUR*sqrt(9.81*h));
+UR=min(UR,3);
+hlimC=0.01;
+Chezy=max(1,h).^(1/6)./MannS;
+%Chezy=5.^(1/6)./MannS;
+%hlimitforU=1;
+ % Ulimit=0.5;
+% UR(h<hlimitforU & UR>Ulimit)=Ulimit+0.5*(UR(h<hlimitforU & UR>Ulimit)-Ulimit);   
+%UR=min(UR,FcrUR*sqrt(9.81*h));
+Ceq_river=0.05*UR.^4./max(hlimC,h)./(sqrt(g).*Chezy.^3*ss^2*d50)*rhos*fMFriver;%.*fTide;
+else
+Ceq_river=0;
+end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+Ceq=Ceq_tide+Ceq_tideS+Ceq_river;
 E=Ceq*(ws*3600*24);  
-
-
-
-
 
 
 
@@ -112,11 +136,11 @@ E=Ceq*(ws*3600*24);
 %Eu(Utransport<=0)=0;
 
 %Hengelung Hansen
-% Chezy=h.^(1/8)./manning;
+% Chezy=h.^(1/8)./MannS;
 % Qs=0.05*(U*fUpeak).^5/fUpeak./(sqrt(g).*Chezy.^3*ss^2*d50)*rhos*Mfrequency; %kg/m/s
 
 %meyepetermuller
-% tau=1030*9.81.*h.^(-1/3).*manning.^2.*(U*fUpeak).^2;%tau=1030*0.0025*(U*fUpeak).^2;
+% tau=1030*9.81.*h.^(-1/3).*MannS.^2.*(U*fUpeak).^2;%tau=1030*0.0025*(U*fUpeak).^2;
 % theta=tau/((rhos-rho)*g*d50);
 % Qs=sqrt(ss*g*d50^3)*8*max(0,(theta -0.06)).^1.5*rhos/fUpeak*Mfrequency; %0.047
 
@@ -136,7 +160,7 @@ E=Ceq*(ws*3600*24);
 
 %Bijker
 % Upeak=U*fUpeak;
-% tau=1030*9.81.*h.^(-1/3).*manning.^2.*(Upeak).^2;%tau=1030*0.0025*(U*fUpeak).^2;
+% tau=1030*9.81.*h.^(-1/3).*MannS.^2.*(Upeak).^2;%tau=1030*0.0025*(U*fUpeak).^2;
 % tauw=0;
 % tautot=tau+tauw;
 % Cb=2;
@@ -167,7 +191,7 @@ E=Ceq*(ws*3600*24);
 
 % taucr=0.3;
 % me=50*10^-5*24*3600;
-% tau=1030*9.81.*h.^(-1/3).*manning.^2.*(U*fUpeak).^2;
+% tau=1030*9.81.*h.^(-1/3).*MannS.^2.*(U*fUpeak).^2;
 % Eu=me*max(0,tau-taucr)./taucr/fUpeak;
 % qs=Eu;
 

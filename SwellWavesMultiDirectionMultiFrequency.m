@@ -64,11 +64,11 @@ end
 
 
 
-if nfrq>=1;kwave1=0*d+1;kwave1(d>0.2)=wavek(1/Tperiodi(1),d(d>0.2));end%kwave=wavek(1/Tp_swell,hwave);^Tperiodi(j)
-if nfrq>=2;kwave2=0*d+1;kwave2(d>0.2)=wavek(1/Tperiodi(2),d(d>0.2));end%kwave=wavek(1/Tp_swell,hwave);^Tperiodi(j)
-if nfrq>=3;kwave3=0*d+1;kwave3(d>0.2)=wavek(1/Tperiodi(3),d(d>0.2));end%kwave=wavek(1/Tp_swell,hwave);^Tperiodi(j)
-if nfrq>=4;kwave4=0*d+1;kwave4(d>0.2)=wavek(1/Tperiodi(4),d(d>0.2));end%kwave=wavek(1/Tp_swell,hwave);^Tperiodi(j)
-if nfrq>=5;kwave5=0*d+1;kwave5(d>0.2)=wavek(1/Tperiodi(5),d(d>0.2));end%kwave=wavek(1/Tp_swell,hwave);^Tperiodi(j)
+if nfrq>=1;kwave1=0*d+1;kwave1(d>0.2)=wavekgiulio(1/Tperiodi(1),d(d>0.2));end%kwave=wavek(1/Tp_swell,hwave);^Tperiodi(j)
+if nfrq>=2;kwave2=0*d+1;kwave2(d>0.2)=wavekgiulio(1/Tperiodi(2),d(d>0.2));end%kwave=wavek(1/Tp_swell,hwave);^Tperiodi(j)
+if nfrq>=3;kwave3=0*d+1;kwave3(d>0.2)=wavekgiulio(1/Tperiodi(3),d(d>0.2));end%kwave=wavek(1/Tp_swell,hwave);^Tperiodi(j)
+if nfrq>=4;kwave4=0*d+1;kwave4(d>0.2)=wavekgiulio(1/Tperiodi(4),d(d>0.2));end%kwave=wavek(1/Tp_swell,hwave);^Tperiodi(j)
+if nfrq>=5;kwave5=0*d+1;kwave5(d>0.2)=wavekgiulio(1/Tperiodi(5),d(d>0.2));end%kwave=wavek(1/Tp_swell,hwave);^Tperiodi(j)
 
 
 Hcr=Cbr*d;Hcr(d<=0.1)=0;  
@@ -98,13 +98,13 @@ if nfrq>=4;bedfr4=1*(sigma4./(9.81*sinh(kwave4.*d))).^2;bedfr4(d<=0.1)=1;end
 if nfrq>=5;bedfr5=1*(sigma5./(9.81*sinh(kwave5.*d))).^2;bedfr5(d<=0.1)=1;end
 
 
-%Refraction coefficients. 
+%Refraction coefficients. There is the extra 2 for calibration
 if nrefrac>=1
-    if nfrq>=1;dCy1=([c1(:,2:end) c1(:,end)]-[c1(:,1) c1(:,1:end-1)])/2./c1.*(d>1);dCx1=([c1(2:end,:); c1(end,:)]-[c1(1,:); c1(1:end-1,:)])/2./c1.*(d>1);end
-    if nfrq>=2;dCy2=([c2(:,2:end) c2(:,end)]-[c2(:,1) c2(:,1:end-1)])/2./c2.*(d>1);dCx2=([c2(2:end,:); c2(end,:)]-[c2(1,:); c2(1:end-1,:)])/2./c2.*(d>1);end
-    if nfrq>=3;dCy3=([c3(:,2:end) c3(:,end)]-[c3(:,1) c3(:,1:end-1)])/2./c3.*(d>1);dCx3=([c3(2:end,:); c3(end,:)]-[c3(1,:); c3(1:end-1,:)])/2./c3.*(d>1);end
-    if nfrq>=4;dCy4=([c4(:,2:end) c4(:,end)]-[c4(:,1) c4(:,1:end-1)])/2./c4.*(d>1);dCx4=([c4(2:end,:); c4(end,:)]-[c4(1,:); c4(1:end-1,:)])/2./c4.*(d>1);end
-    if nfrq>=5;dCy5=([c5(:,2:end) c5(:,end)]-[c5(:,1) c5(:,1:end-1)])/2./c5.*(d>1);dCx5=([c5(2:end,:); c5(end,:)]-[c5(1,:); c5(1:end-1,:)])/2./c5.*(d>1);end
+    if nfrq>=1;dCy1=([c1(:,2:end) c1(:,end)]-[c1(:,1) c1(:,1:end-1)])/2./c1.*(d>1)*1;dCx1=([c1(2:end,:); c1(end,:)]-[c1(1,:); c1(1:end-1,:)])/2./c1.*(d>1)*1;end
+    if nfrq>=2;dCy2=([c2(:,2:end) c2(:,end)]-[c2(:,1) c2(:,1:end-1)])/2./c2.*(d>1)*1;dCx2=([c2(2:end,:); c2(end,:)]-[c2(1,:); c2(1:end-1,:)])/2./c2.*(d>1)*1;end
+    if nfrq>=3;dCy3=([c3(:,2:end) c3(:,end)]-[c3(:,1) c3(:,1:end-1)])/2./c3.*(d>1)*1;dCx3=([c3(2:end,:); c3(end,:)]-[c3(1,:); c3(1:end-1,:)])/2./c3.*(d>1)*1;end
+    if nfrq>=4;dCy4=([c4(:,2:end) c4(:,end)]-[c4(:,1) c4(:,1:end-1)])/2./c4.*(d>1)*1;dCx4=([c4(2:end,:); c4(end,:)]-[c4(1,:); c4(1:end-1,:)])/2./c4.*(d>1)*1;end
+    if nfrq>=5;dCy5=([c5(:,2:end) c5(:,end)]-[c5(:,1) c5(:,1:end-1)])/2./c5.*(d>1)*1;dCx5=([c5(2:end,:); c5(end,:)]-[c5(1,:); c5(1:end-1,:)])/2./c5.*(d>1)*1;end
 end
 
 

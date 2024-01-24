@@ -7,6 +7,7 @@ d(d<0 | A==0)=0.1;
 %Parameters
 alpha=50; %adimensional
 
+
 spread=15;
 spread2=30;
 spread3=45;
@@ -20,16 +21,27 @@ Holateral=Ho;  %this imposes the lateral boundary condition when the flag AW=2 i
     %i is left ray (angle turnerd clockwise, positive, increase the angle, whcih means will go toward lower left (more high angle).
     %j is right ray
 
-%condtions on the boundaries (directinoal spding imposed at the b.c.)   
-    facsprdo=1;
-    facsprdi=0.;
-    facsprdj=0.;
-    facsprdi2=0.;
-    facsprdj2=0.;
-    facsprdi3=0;
-    facsprdj3=0;
+% %condtions on the boundaries (directinoal spding imposed at the b.c.)   
+%     facsprdo=1;
+%     facsprdi=0.;
+%     facsprdj=0.;
+%     facsprdi2=0.;
+%     facsprdj2=0.;
+%     facsprdi3=0;
+%     facsprdj3=0;
+%     facsprdi4=0;
+%     facsprdj4=0;
+%%condtions on the boundaries (directinoal spding imposed at the b.c.)   
+    facsprdo=0.6;
+    facsprdi=0.1;
+    facsprdj=0.1;
+    facsprdi2=0.05;
+    facsprdj2=0.05;
+    facsprdi3=0.05;
+    facsprdj3=0.05;
     facsprdi4=0;
     facsprdj4=0;
+    
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %   
 
 anglei=NaN;anglej=NaN;anglei2=NaN;anglej2=NaN;anglei3=NaN;anglej3=NaN;anglei4=NaN;anglej4=NaN;
@@ -63,10 +75,12 @@ end
 
 
 
+%kwave=0*d+1;kwave(d>0.2)=wavekgiulio(1/Tpeak,d(d>0.2));%kwave=wavek(1/Tp_swell,hwave);^Tpeak(j)
 kwave=0*d+1;kwave(d>0.2)=wavek(1/Tpeak,d(d>0.2));%kwave=wavek(1/Tp_swell,hwave);^Tpeak(j)
 
 Hcr=Cbr*d;
 Hcr(d<=0.1)=0;
+Hcr(d<=hwSwell_lim)=0;  
 
 %IMPORTANT CHNAGE SEPT 2018!!!!!
 Hcr(d<hwSwell_lim)=0;
@@ -80,8 +94,11 @@ bedfr=1*(sigma./(9.81*sinh(kwave.*d))).^2;bedfr(d<=0.1)=1;
 
 
 %Refraction coefficients
-dCx=([c(2:end,:); c(end,:)]-[c(1,:); c(1:end-1,:)])/2./c.*(d>1); %NS
-dCy=([c(:,2:end) c(:,end)]-[c(:,1) c(:,1:end-1)])/2./c.*(d>1);   %EW
+%if nrefrac>=1  %
+%Note from giulio: there was a2 *2 in the past, a 0.5 around Dec 2018, and a
+%1 in March 2019 (after taking off the 2 in the bed friction of Coolins)
+dCx=([c(2:end,:); c(end,:)]-[c(1,:); c(1:end-1,:)])/2./c.*(d>1)*1; %NS
+dCy=([c(:,2:end) c(:,end)]-[c(:,1) c(:,1:end-1)])/2./c.*(d>1)*1;   %EW
 %end
 
 
@@ -150,12 +167,9 @@ PWswell(i+1,:)=cg(i+1,:)*1030*9.8.*E;
 %       ALLangle,ALLfacsprd,ALLspd,dCx(i,:),dCy(i,:));
 
 
-% %%THA GOOD
-   [E,ALLE,dPW]=waveEVOLUTIONstep(E,E,ALLE,i,nrefrac,alpha,Cbr,Cbed,wavefrictionCollins,gridDIR,p,q,ii,jj,N,M,A,AW(i,:),AW(i+1,:),d(i,:),d(i+1,:),kwave(i,:),c,cg(i,:),cg(i+1,:),bedfr(i,:),sigma,Tpeak,dx,periodic,Holateral,sigmatot,...
-         ALLangle,ALLfacsprd,ALLspd,dCx(i+1,:),dCy(i+1,:));
-
-  %[E,ALLE,dPW]=waveEVOLUTIONstep(E,E,ALLE,i,nrefrac,alpha,Cbr,Cbed,wavefrictionCollins,gridDIR,p,q,ii,jj,N,M,A,AW(i,:),AW(i+1,:),d(i,:),d(i+1,:),kwave(i+1,:),c,cg(i,:),cg(i+1,:),bedfr(i+1,:),sigma,Tpeak,dx,periodic,Holateral,sigmatot,...
-  %      ALLangle,ALLfacsprd,ALLspd,dCx(i+1,:),dCy(i+1,:));
+%%THA GOOD
+  [E,ALLE,dPW]=waveEVOLUTIONstep(E,E,ALLE,i,nrefrac,alpha,Cbr,Cbed,wavefrictionCollins,gridDIR,p,q,ii,jj,N,M,A,AW(i,:),AW(i+1,:),d(i,:),d(i+1,:),kwave(i,:),c,cg(i,:),cg(i+1,:),bedfr(i,:),sigma,Tpeak,dx,periodic,Holateral,sigmatot,...
+        ALLangle,ALLfacsprd,ALLspd,dCx(i+1,:),dCy(i+1,:));
 
  % [E,ALLE,dPW]=waveEVOLUTIONstep(E,E,ALLE,i,nrefrac,alpha,Cbr,Cbed,wavefrictionCollins,gridDIR,p,q,ii,jj,N,M,A,AW(i,:),AW(i+1,:),d(i,:),d(i+1,:),kwave(i+1,:),c,cg(i,:),cg(i+1,:),bedfr(i+1,:),sigma,Tpeak,dx,periodic,Holateral,sigmatot,...
 %        ALLangle,ALLfacsprd,ALLspd,dCx(i+1,:),dCy(i+1,:));

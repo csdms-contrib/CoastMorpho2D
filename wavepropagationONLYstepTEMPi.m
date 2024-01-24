@@ -71,6 +71,7 @@ AW=repadAWsingle(AW,AWup,angle,N,M,i);
 stretchdx=1/cos(angle/180*pi);
 
 
+
         %Dissipation by breaking
         Hcr=max(0.01,Cbr*d(p));
         brk=0*E;
@@ -78,11 +79,28 @@ stretchdx=1/cos(angle/180*pi);
         Qbrk=((val(val>0.1 & E>0.00001)-0.1)/0.9).^2;
         brk(val>0.1 & E>0.00001)=0.25/T*Qbrk.*(Hcr(val>0.1 & E>0.00001)).^2./E(val>0.1 & E>0.00001);%brk(E<0.01)=0;   
 
+
+        %Qbrk=((val(val>0.01 & E>0.01)-0.01)/0.99).^2;
+        %brk(val>0.01 & E>0.01)=0.25/T*Qbrk.*(Hcr(val>0.01 & E>0.01)).^2 ./E(val>0.01 & E>0.01);%brk(E<0.01)=0;
+        %Qbrk=((val(val>0.1 & E>0.01)-0.1)/0.9).^2;
+        %brk(val>0.1 & E>0.01)=0.25/T*Qbrk.*(Hcr(val>0.1 & E>0.01)).^2./E(val>0.1 & E>0.01);%brk(E<0.01)=0;
+        %brk=brk*0;
+        %brk=0.25/Tp_swell*Qbrk.*Hcr.^2./Etot;brk(E<0.001)=0;
+        
+        
         %Whitecapping
+        %whitecap=3.33*10^-5*sigma.*(E*sigma^4/9.81^2/0.00457).^2.*max(0,kwave./max(1,kwavetot));
+        %whitecap=2.36*10^-5*(2*pi/Tp_swell).*(E/Ejonswap.*kwavetot.^2/0.00457).^2.*max(0,max(1,kwave)./max(1,kwavetot));
+        
+        
+        %whitecap=3.33*10^-5*sigmatot.*(Etot/Ejonswap*sigmatot^4/9.81^2/0.00457).^2.*(sigma/sigmatot).^2;%BEST
+        %whitecap=3.33*10^-5*sigmatot.*(EEE.*sigmatot.^4/9.81^2/0.00457).^2.*(sigma./sigmatot).^2;%
         whitecap=3.33*10^-5*sigmatot.^7.*(EEE/9.81^2/0.00457.*sigma).^2;%
         
         %Bed friction
         bedfr=bedfr(p);
+        %Cbed*(sigma./(9.81*sinh(kwave(p).*d(p)))).^2;bedfr(d(p)<=0.1)=1;
+        %bedfr=Cbed*(sigma./(9.81*sinh(kwave(i+1,p).*d(i+1,p)))).^2;bedfr(d(i+1,p)<=0.1)=1;
         
         
         %Shoaling, bed friction, and breaking
@@ -122,6 +140,7 @@ dPW=(PWup-PW)/(dx*stretchdx);
 
         
 s=floor(tgangle*i); 
+%s=floor(tgangle*(i+1)); 
 E=circshift(E,[0 -s*angledir]);
 dPW=circshift(dPW,[0 -s*angledir]);
  

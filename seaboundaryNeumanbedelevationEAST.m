@@ -1,0 +1,12 @@
+function [plyr,Y1,Y2,Y3,Yb,flyr1,flyr2,flyr3,flyrb1,flyrb2,flyrb3]=seaboundaryNeumanbedelevationEAST(plyr,Y1,Y2,Y3,Yb,flyr1,flyr2,flyr3,flyrb1,flyrb2,flyrb3)
+plyr(:,end)=plyr(:,end-1);
+Y1(:,end)=Y1(:,end-1);
+Y2(:,end)=Y2(:,end-1);
+Y3(:,end)=Y3(:,end-1);
+Yb(:,end)=Yb(:,end-1);
+flyr1(:,end,:)=flyr1(:,end-1,:);
+flyr2(:,end,:)=flyr2(:,end-1,:);
+flyr3(:,end,:)=flyr3(:,end-1,:);
+flyrb1(:,end)=flyrb1(:,end-1);
+flyrb2(:,end)=flyrb2(:,end-1);
+flyrb3(:,end)=flyrb3(:,end-1);

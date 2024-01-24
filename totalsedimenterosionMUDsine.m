@@ -1,59 +1,115 @@
-function [E,Etide,Eswell]=totalsedimenterosionMUDsine(U,MANN,VEG,fTide,UR,Uwave_sea,Uwave,Tp_sea,Tp_swell,fMFswell,fMFsea,fMFriver,taucr,tcrgradeint,leveltauincrease,taucrVEG,me,h,lev,TrangeVEG,computeSeaWaves,computeSwellwave,computeRiver);
-fUpeak=pi/2;
+function  [E,Eflow,B]=totalsedimenterosionMUDsine(ho,h,taucr,taucrVEG,VEG,me,MannS,fTide,U,FcrUT,FcrUTveg,hlimC,calculateshallowflow,US,hS,nSHALLOW,computeSeaWaves,Uwave_seaI,Tp_seaI,computeSwellWave,Uwave,Tp_swell,computeRiver,fMFriver,UR,flowdestroyVEG,B);
+          
+%nSHALLOW=1;
 
 taucro=U*0+taucr;
 taucro(VEG==1)=taucrVEG;
 
-
-%increase tcr with depth (asusming an existing vertical distribution. 
-%USE with cauton, only ok for simulation of small marsh domain
-xi=-lev-leveltauincrease;xi(xi<0)=0;%
-taucro=taucro+xi*tcrgradeint;
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%MannS=MannS*0+0.015;
+Fcr=h*0;
+Fcr(VEG==0)=FcrUT;
+Fcr(VEG==1)=FcrUTveg;
 
 
-%figure;imagesc(taucro);pause
-%%%%%%%%%%%%%%%%%%%%%tidal current erosion
+Eflow=0;
+
+
+UTmax=Fcr.*sqrt(9.8*ho);
+%UTmax(h<=0.01 | VEG==1)=0;
+%UTmax(h<=0.01 | VEG==1)=0;
 ncyc=10;
-E=0;
+Ei=0;
 for i=0:ncyc
-Utide=U*fUpeak*sin(i/ncyc*pi/2);
-tauC=1030*9.81*MANN.^2.*h.^(-1/3).*Utide.^2; 
-E=E+1/(ncyc+1)*me.*(sqrt(1+(tauC./taucro).^2)-1);
+Utide=U*pi/2*sin(i/ncyc*pi/2);
+Utide=min(Utide,UTmax);
+%tauC=1030*9.81*MannS.^2.*max(h,hlimC).^(-1/3).*Utide.^2; 
+tauC=1030*9.81*MannS.^2.*h.^(-1/3).*Utide.^2; 
+%tauC=1030*9.81*MannS.^2.*Utide.^2; 
+%tauC(h<0.5 & tauC>limitertauC)=limitertauC+(tauC(h<0.5 & tauC>limitertauC)-limitertauC)*0.1;%limiter for tay, since the smallest water depth kro = 5cm
+Ei=Ei+1/(ncyc+1)*me.*(sqrt(1+(tauC./taucro).^2)-1);%E=E+1/(ncyc+1)*me.*taucr./taucro.*(sqrt(1+(tauC./taucr).^2)-1);
+%Ei=Ei+1/(ncyc+1)*me.*max(0,tauC-taucro)./taucro;%E=E+1/(ncyc+1)*me.*taucr./taucro.*(sqrt(1+(tauC./taucr).^2)-1);
+if flowdestroyVEG==1; B(tauC>taucro)=0; end
+Eflow=Eflow+Ei;
 end
-Etide=E;
 
-%correctionSWELL=1;
-%%Swell erosion
-if computeSwellwave==1
-ko=0.1/1000*3;
+
+%Shallow flow
+if calculateshallowflow==1
+tauC=1030*9.81*MannS.^2.*hS.^(-1/3).*US.^2; 
+%tauC=1030*9.81*MannS.^2.*US.^2; 
+%tauC(hS<0.5 & tauC>limitertauC)=limitertauC+(tauC(hS<0.5 & tauC>limitertauC)-limitertauC)*0.1;%limiter for tay, since the smallest water depth kro = 5cm
+Ei=1/nSHALLOW*me.*(sqrt(1+(tauC./taucro).^2)-1);%E=E+1/(ncyc+1)*me.*taucr./taucro.*(sqrt(1+(tauC./taucr).^2)-1);
+%Ei=1/nSHALLOW*me.*max(0,tauC-taucro)./taucro;%E=E+1/(ncyc+1)*me.*taucr./taucro.*(sqrt(1+(tauC./taucr).^2)-1);
+Eflow=Eflow+Ei;
+end
+
+
+%Swell wave
+if computeSwellWave==1
+ko=1/1000;%
 aw=Tp_swell.*Uwave/(2*pi);
-fw=0.00251*exp(5.21*(aw/ko).^-0.19);fw(aw/ko<pi/2)=0.3;
-%fw=0.015;
+fw=0.00251*exp(5.21*(aw/ko).^-0.19);fw(aw/ko<pi/2)=0.3;%fw=0.015;
 tauWswell=0.5*1030*fw.*Uwave.^2;
 %E=E+me*max(0,tauWswell-taucr)./taucro*fMFswell;
-Eswell=me.*(sqrt(1+(tauWswell./taucro).^2)-1)*fMFswell.*fTide;
-E=E+Eswell; 
+%E=E+me.*(sqrt(1+(tauWswell./taucro).^2)-1)l.*fTide; %OCIO AI TOLTO QUIESTI fTide IN APRIL 18th 2018
+Eswellwave=me.*max(0,tauWswell-taucro)./taucro;
+else
+Eswellwave=0;
 end
 
 
-%Sea waves erosion
+%Sea wave 
 if computeSeaWaves==1
-ko=0.1/1000*3;
-aw=Tp_sea.*max(0,Uwave_sea)/(2*pi);
-fw=0.00251*exp(5.21*(aw/ko).^-0.19);fw(aw/ko<pi/2)=0.3;
-%fw=0.015;
-tauWsea=0.5*1030*fw.*max(0,Uwave_sea).^2;
-%E=E+me*max(0,tauWsea-taucr)./taucro*fMFsea;
-E=E+me.*(sqrt(1+(tauWsea./taucro).^2)-1)*fMFsea.*fTide;  %OCIO AI TOLTO QUIESTI IN APRIL 18th 2018
+ko=1/1000;
+Nh=size(Uwave_seaI,3);
+Eseawave=0;
+for i=1:Nh
+Uwave_sea=max(0,Uwave_seaI(:,:,i));
+Tp_sea=max(0,Tp_seaI(:,:,i));
+aw=Tp_sea.*Uwave_sea/(2*pi);
+fw=0.00251*exp(5.21*(aw/ko).^-0.19);fw(aw/ko<pi/2)=0.3;%fw=0.015;
+tauWsea=0.5*1030*fw.*Uwave_sea.^2;
+Ewtemp=me.*(sqrt(1+(tauWsea./taucro).^2)-1);
+%Ewtemp=me.*max(0,tauWsea-taucro)./taucro;%E=E+1/(ncyc+1)*me.*taucr./taucro.*(sqrt(1+(tauC./taucr).^2)-1);
+Eseawave=Eseawave+Ewtemp;  %OCIO AI TOLTO QUIESTI IN APRIL 18th 2018
+end
+Eseawave=Eseawave/Nh;
+else
+Eseawave=0;
 end
 
-%River erosion
+
+%River 
 if computeRiver==1
-%tauCRiver=1030*0.04^2*9.81*h.^(-1/3).*UR.^2;
-tauC=1030*9.81*MANN.^2.*h.^(-1/3).*UR.^2; 
-E=E+me.*(sqrt(1+(tauC./taucro).^2)-1)*fMFriver.*fTide;  
+%FcrUR=0.3;%UR=min(UR,FcrUR*sqrt(9.81*h));
+%tauC=1030*9.81*MannS.^2.*max(h,hlimC).^(-1/3).*UR.^2;  
+tauC=1030*9.81*MannS.^2.*h.^(-1/3).*UR.^2;  
+%tauC=1030*9.81*MannS.^2.*UR.^2;  
+%Ei=me.*max(0,tauC-taucro)./taucro*fMFriver.*fTide; 
+Ei=me.*(sqrt(1+(tauC./taucro).^2)-1)*fMFriver;
+Eflow=Eflow+Ei;
 end
+
+
+
+
+E=Eflow+Eseawave+Eswellwave;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

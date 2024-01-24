@@ -1,4 +1,5 @@
 function F=calculatefetch(A,ndir,dx,angle)
+
 angle=angle-180;
 [N,M]=size(A);
 F=zeros(N,M);

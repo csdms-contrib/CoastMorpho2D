@@ -1,4 +1,4 @@
-function [deltaY1,deltaY2,deltaY3,Pedge,Y2OX,EdgeERY1,EdgeERY2,EdgeERY3]=EdgeerosionXXX(P,z,aw,maxedgeheight,fox,dt,dx,MASK,A,fracY1,fracY2,fracY3,Y2OX);
+function [deltaY1,deltaY2,deltaY3,Pedge,Y2OX,EdgeERY1,EdgeERY2,EdgeERY3]=EdgeerosionXXX(P,z,aw,maxedgeheight,fox,dt,dx,MASK,A,fracY1,fracY2,fracY3,Y2OX,variableEDGEEROSION,awVAR);
 
 
 
@@ -7,8 +7,8 @@ function [deltaY1,deltaY2,deltaY3,Pedge,Y2OX,EdgeERY1,EdgeERY2,EdgeERY3]=Edgeero
 %fox=0;
 
 %the non-periodic cell are walls
-MASK(1,:)=0;
-MASK(end,:)=0;
+%MASK(1,:)=0;
+%MASK(end,:)=0;
 
 %you get the wave power from the 4 sourronding cells
 Pedge=[P(:,1)*0 P(:,1:end-1)]+[P(1,:)*0; P(1:end-1,:)]+[P(:,2:end) P(:,end)*0]+[P(2:end,:); P(end,:)*0];
@@ -17,8 +17,12 @@ Pedge(MASK==1)=0;%the wave power in the mudflat becomes zero!
 edg=find(A==1 & MASK==0 & Pedge>0);
 %rng('shuffle');
 r=rand(length(edg),1);% you only need rng at the beginnign of the loop
+
+if variableEDGEEROSION==1;
+a=find(r<awVAR(edg).*Pedge(edg)*dt/dx);
+else
 a=find(r<aw*Pedge(edg)*dt/dx);
-%edgG=edg;save edgG edgG
+end
 
 %these cells will erode (the "high" cells)
 edger=edg(a);
@@ -30,7 +34,6 @@ deltaY3=MASK*0;
 EdgeERY1=MASK*0;
 EdgeERY2=MASK*0;
 EdgeERY3=MASK*0;
-
 
 
  %m  max heigth that is eroded, to avoid strange erosion of channels

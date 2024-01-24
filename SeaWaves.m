@@ -1,19 +1,21 @@
 function [Um,TP,HS,F,kwave,PW]=SeaWaves(h,angle,hwSea_lim,range,wind,MASK,ndir,dx);
 
+[N,M]=size(h);
+
 %angle=0;
 Um=0*h;TP=0*h;HS=0*h;
 
 extrafetch=5000;%[m}
-Lbasin=1000/dx;
+Lbasin=0;%1000/dx;
 Fetchlim=max(50,dx*2);%dx*2;%600;%dx*2*10;
 dlo=hwSea_lim; %minimum water depth to calculate wave. below this you don't calculate it
 
 
 
+MASK(:,1)=0;MASK(:,end)=0;
 
-extra=0;%if (angle<90 | angle>270);extra=1;else;extra=1;end
 
-
+extra=1;%if (angle<90 | angle>270);extra=1;else;extra=1;end
 
 
 %The standard way
@@ -33,7 +35,7 @@ end
 %For the idealize basin
 %extrafetch=10000;%[m}
 if extra==1;
-F=calculatefetchWITHEXTRAS(MASK,ndir,dx,angle,extrafetch,Lbasin,h-0.1-range/4);
+F=calculatefetchWITHEXTRAS(MASK,ndir,dx,angle,extrafetch,Lbasin,MASK);
 end
 % F1=calculatefetchWITHEXTRAS(MASK,ndir,dx,angle,extrafetch);
 % F2=calculatefetchWITHEXTRAS(MASK,ndir,dx,mod(angle+90,360),extrafetch);
@@ -59,27 +61,21 @@ Fo=F;
 F(Fo<=Fetchlim)=0;
 
 %usa questo per isolared la mudflat
-%%%%%%%%%%%%%%%%%%%%%%%%%%%
-if extra==1;
-MASK(end-Lbasin:end,:)=1;
-F(end-Lbasin:end,:)=extrafetch;
-Fo(end-Lbasin:end,:)=extrafetch;
-end
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%
+% if extra==1;
+% MASK(end-Lbasin:end,:)=1;
+% F(end-Lbasin:end,:)=extrafetch;
+% Fo(end-Lbasin:end,:)=extrafetch;
+% end
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %diffuse the fetch field    
-alphadiffusefetch=0.1;   %messo 10 for the VCR wave validation 10;%0;%%%QUESTO ERA 1 FINO AD APRILE 23 2018!!!!!
-F=diffusefetch(MASK,F,alphadiffusefetch,dx); 
+alphadiffusefetch=0.01;   %messo 10 for the VCR wave validation 10;%0;%%%QUESTO ERA 1 FINO AD APRILE 23 2018!!!!!
+F=diffusefetchPERPEND(MASK,F,alphadiffusefetch,dx,angle); 
 F(Fo<=Fetchlim | MASK==0)=0;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% 
-% figure
-% imagesc(F)
-% colormap('jet')
-% caxis([0 max(F(:))])
-% pause
-% 
+
 
 
 
@@ -97,8 +93,17 @@ D=h(a);Ff=F(a);
 
 %[Hs,Tp]=YeV_correction(Ff,wind,D);%[Hs,Tp]=YeV(Ff,wind,min(3,D));  %TRUCCO PER EVITARE LARGE WAVES IN CHANELS
 [Hs,Tp]=YeV(Ff,wind,D);%[Hs,Tp]=YeV(Ff,wind,min(3,D));  %TRUCCO PER EVITARE LARGE WAVES IN CHANELS
+
 HS(a)=Hs;
 TP(a)=Tp;TP(TP==0)=1;
+
+
+
+% HsI=h*0;
+% nn=2000/dx;
+% HsI(end-nn:end,:)=0.3*[0:nn]'/nn*ones(1,M);
+% HS=HS+HsI;
+% TP=TP+5*HsI;
 
 
 %do not diffuse in cells outside the MASK
