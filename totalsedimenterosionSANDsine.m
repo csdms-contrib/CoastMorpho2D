@@ -1,69 +1,182 @@
-function [E,Ceq]=totalsedimenterosionSANDsine(h,hlimC,kro,MannS,rho,rhos,ss,d50,ws,fTide,computetidalcurrent,U,FcrUT,calculateshallowflow,US,hS,nSHALLOW,computeriver,UR,fMFriver);
+function [E,Ceq]=totalsedimenterosionSANDsine(h,hlimC,kro,MannS,rho,rhos,ss,d50,ws,fTide,computetidalcurrent,U,FcrUT,UTref,calculateshallowflow,US,hS,nSHALLOW,computeriver,UR,fMFriver);
 g=9.81;
 %nSHALLOW=1;
 %hlimiterChezy=1;
 %h=max(h,hlimiterChezy);%NEW February 2023
 %Chezy=max(h,hlimC).^(1/6)./MannS;
 
+%U=2;
+%h=5;
+%MannS=0.015;
 
-Chezy=h.^(1/6)./MannS;
-%Chezy=1./MannS;
+%U=sqrt((U*pi/2).*UTref);
+%U=sqrt((U).*UTref);
+%U=sqrt((U).*1);
+
+%U=U.^(1/2);
+%U=(U.*UTref.^2).^(1/3);
+
+%Chezy=h.^(1/6)./MannS;
+%Chezy=max(h,1).^(1/6)./MannS;
+Chezy=max(h,0.1).^(1/6)./MannS;
+
+U(h<=kro)=0;
+
+hlimC=0.01;%0.01;
+
+FcrUT=1;
 
 
-
-
+%U=0;
+%Hengelund
 %Tides%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if computetidalcurrent==1
 UTmax=FcrUT*sqrt(9.8*h);
 ncyc=10;
 Ceq_tide=0;
 for i=0:ncyc
-Ui=U*pi/2*sin(i/ncyc*pi/2);
-Ui=min(Ui,UTmax);
-Ceq_tidei=0.05*Ui.^4./max(hlimC,h)./(sqrt(g).*Chezy.^3*ss^2*d50)*rhos; %kg/m/s
+%Ui=U*pi/2*sin(i/ncyc*pi/2);
+Ui=U*pi/2*cos(i/ncyc*pi);
+Ui=Ui+UR;
+%Ui=min(Ui,UTmax);
+%Ceq_tidei=0.05*Ui.^4./max(hlimC,h)./(sqrt(g).*Chezy.^3*ss^2*d50)*rhos; %kg/m/s
+Ceq_tidei=0.05*Ui.^4; %kg/m/
+%Ceq_tidei=0.05*Ui.^2.4*1.5; %kg/m/
+%Ceq_tidei=0.05*max(Ui-0.2,0).^2.4*1.5; %kg/m/
 Ceq_tide=Ceq_tide+1/(ncyc+1)*Ceq_tidei;
 end
+Ceq_tide=Ceq_tide./max(hlimC,h)./(sqrt(g).*Chezy.^3*ss^2*d50)*rhos; %kg/m/
 else
 Ceq_tide=0;  
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%Ceq_tide=Ceq_tide*2;%(pi/2);%
 
 
-
-%Shallow tidal flow%%%%%%%%%%%%%%%%
-if calculateshallowflow==1
-Chezy=hS.^(1/6)./MannS;
-%Chezy=1./MannS;
-Ceq_tideS=1/nSHALLOW *0.05*US.^4./max(hlimC,hS)./(sqrt(g).*Chezy.^3*ss^2*d50)*rhos;
-%Ceq_tideS=1/nSHALLOW *0.05*US.^4./max(hlimC,h)./(sqrt(g).*Chezy.^3*ss^2*d50)*rhos;
-else
-Ceq_tideS=0;
+if computetidalcurrent==0 & computeriver==1
+Ceq_tide=0.05*UR.^4; %kg/m/
+Ceq_tide=Ceq_tide./max(hlimC,h)./(sqrt(g).*Chezy.^3*ss^2*d50)*rhos; %kg/m/   
 end
+
+Ceq_tide=Ceq_tide.*fTide;%
+%Ceq_tide=Ceq_tide.*max(0.1,fTide);%
+
+% 
+% %van Rijn
+% %U=2;h=2;
+% %U(h<0.1)=0;
+% Ucr=0.19*d50^0.1*log10(12*max(h,0.1)/(3*1*d50));
+% %Tides%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% if computetidalcurrent==1
+% UTmax=FcrUT*sqrt(9.8*h);
+% ncyc=10;
+% Ceq_tide=0;
+% nu=10^-6;
+% Ds=d50*(ss*g/nu^2)^(1/3);
+% for i=0:ncyc
+% Ui=U*pi/2*sin(i/ncyc*pi/2);
+% Ui=min(Ui,UTmax);
+% %Ceq_tidei=0.05*Ui.^4./max(hlimC,h)./(sqrt(g).*Chezy.^3*ss^2*d50)*rhos; %kg/m/s
+% %Ceq_tidei=0.05*Ui.^4; %kg/m/
+% %Ceq_tidei=0.05*Ui.^2.4*1.5; %kg/m/
+% Me=max(Ui-Ucr,0)/sqrt(ss*g*d50);
+% Ceq_tidei=1/20*0.008*rhos*Me.^2.4*d50*(Ds)^-0.6./max(hlimC,h); %kg/m/
+% Ceq_tide=Ceq_tide+1/(ncyc+1)*Ceq_tidei;
+% end
+% %Ceq_tide=Ceq_tide./max(hlimC,h)./(sqrt(g).*Chezy.^3*ss^2*d50)*rhos; %kg/m/
+% else
+% Ceq_tide=0;  
+% end
+
+
+
+%figure;imagesc(U.*(h>0.5));pause
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% % Ceq_tide=Ceq_tide*0.2;
+%Ceq_tide*U*h
+%pause
+
+% %tried dec 2024 for Schelde
+% if computetidalcurrent==1
+% UTmax=FcrUT*sqrt(9.8*h);
+% Ui=U;%*pi/2;%./max(0.1,min(1,0.5+fTide));%pi/2;
+% Ui=min(Ui,UTmax);
+% %Ceq_tide=0.05*Ui.^4./max(hlimC,h)./(sqrt(g).*Chezy.^3*ss^2*d50)*rhos; %kg/m/s
+% %Ceq_tide=0.05*Ui.^4./max(hlimC,h)./(sqrt(g).*Chezy.^3*ss^2*d50)*rhos*pi/2*2; %kg/m/s
+% Ceq_tide=0.05*Ui.^4./max(hlimC,h)./(sqrt(g).*Chezy.^3*ss^2*d50)*rhos;%.*hratio;%./max(0.1,fTide);%.*fTide; %kg/m/s
+% else
+% Ceq_tide=0;
+% end
+% %Ceq_tide=Ceq_tide/(pi/2);
 
 
 
-%River%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-if computeriver==1
-FcrUR=0.5;
-%hh=max(h,0.1);
-UR=min(UR,FcrUR*sqrt(9.81*h));
-UR=min(UR,3);
-hlimC=0.01;
-Chezy=max(1,h).^(1/6)./MannS;
-%Chezy=5.^(1/6)./MannS;
-%hlimitforU=1;
- % Ulimit=0.5;
-% UR(h<hlimitforU & UR>Ulimit)=Ulimit+0.5*(UR(h<hlimitforU & UR>Ulimit)-Ulimit);   
-%UR=min(UR,FcrUR*sqrt(9.81*h));
-Ceq_river=0.05*UR.^4./max(hlimC,h)./(sqrt(g).*Chezy.^3*ss^2*d50)*rhos*fMFriver;%.*fTide;
-else
-Ceq_river=0;
-end
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-Ceq=Ceq_tide+Ceq_tideS+Ceq_river;
+%Ceq_tide=Ceq_tide.*fTide;%*2;
+%Ceq_tide=Ceq_tide.*sqrt(fTide);
+
+
+
+
+% %FcrUT
+% hlimC=0.1;
+% %Tides%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% if computetidalcurrent==1
+% UTmax=FcrUT*sqrt(9.8*h);
+% Ceq_tide=0;
+% Ui=U*pi/2;
+% Ui=min(Ui,UTmax);
+% max(Ui(:))
+% Ceq_tide=0.05*Ui.^4./max(hlimC,h)./(sqrt(g).*Chezy.^3*ss^2*d50)*rhos; %kg/m/s
+% else
+% Ceq_tide=0;  
+% end
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% %Ceq_tide=Ceq_tide./max(0.1,fTide.^0.5);
+% %Ceq_tide=Ceq_tide.*fTide;
+
+
+
+% %Shallow tidal flow%%%%%%%%%%%%%%%%
+% if calculateshallowflow==1
+% Chezy=hS.^(1/6)./MannS;
+% %Chezy=1./MannS;
+% %US=US*pi/2;
+% Ceq_tideS=1/nSHALLOW *0.05*US.^4./max(hlimC,hS)./(sqrt(g).*Chezy.^3*ss^2*d50)*rhos;
+% %Ceq_tideS=1/nSHALLOW *0.05*US.^4./max(hlimC,h)./(sqrt(g).*Chezy.^3*ss^2*d50)*rhos;
+% else
+% Ceq_tideS=0;
+% end
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+
+% if computeriver==1
+% % FcrUR=1;%1;
+% % %hh=max(h,0.1);
+% % UR=min(UR,FcrUR*sqrt(9.81*h));
+% % UR=min(UR,4);
+% hlimC=0.01;
+% Chezy=max(h,0.1).^(1/6)./MannS;
+% %Chezy=max(h,0.1).^(1/6)./MannS;
+% %Chezy=h.^(1/6)./MannS;
+% %Chezy=1.^(1/6)./MannS;
+% %Chezy=5.^(1/6)./MannS;
+% %hlimitforU=1;
+%  % Ulimit=0.5;
+% % UR(h<hlimitforU & UR>Ulimit)=Ulimit+0.5*(UR(h<hlimitforU & UR>Ulimit)-Ulimit);   
+% %UR=min(UR,FcrUR*sqrt(9.81*h));
+% Ceq_river=0.05*UR.^4./max(hlimC,h)./(sqrt(g).*Chezy.^3*ss^2*d50)*rhos*fMFriver;%.*fTide;
+% else
+% Ceq_river=0;
+% end
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+Ceq=Ceq_tide;%+Ceq_river;
 E=Ceq*(ws*3600*24);  
 
 

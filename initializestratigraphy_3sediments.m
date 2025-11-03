@@ -23,6 +23,16 @@ flyr1(:,:,1:plyr)=P.initialf;
 flyr2(:,:,1:plyr)=1-P.initialf;
 flyr3(:,:,1:plyr)=0;
 
+% [n,m]=size(plyr);
+% for i=1:N
+% for j=1:M
+% flyr1(:,:,1:plyr(n,m))=P.initialf;
+% flyr2(:,:,1:plyr(n,m))=1-P.initialf;
+% flyr3(:,:,1:plyr(n,m))=0;
+% end
+% end
+
+
 flyrb1=ones(N,M)*P.initialf;%composition of bottom layer
 flyrb2=ones(N,M)*(1-P.initialf);%composition of bottom layer
 flyrb3=ones(N,M)*0;%composition of bottom layer

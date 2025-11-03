@@ -1,9 +1,7 @@
-function [EmD,SSM,FLX,XXTide,XXRiver]=sedtran(numeric,d,A,SPCLcell,Do,DiffS,Zlev,h,ho,E,WS,dx,dt,rbulk,co,SeaSSCbelowLIMIT,ZlevcoLIMIT,Ux,Uy,fTide,Ttide,q1,qm1,qN,qmN,periodic,computeriver,computetide,residualcurrents,kro,coRIVER,FLX,tracksedimentfluxes,XX);
+function [EmD,SSM,FLX,XXTide,XXRiver]=sedtran(numeric,d,A,SPCLcell,Do,DiffS,Zlev,h,ho,E,WS,dx,dt,rbulk,co,SeaSSCbelowLIMIT,ZlevcoLIMIT,Ux,Uy,fTide,Ttide,q1,qm1,qN,qmN,Cq1,CqN,periodic,computeriver,computetide,residualcurrents,kro,coRIVER,FLX,tracksedimentfluxes,XX);
 
-% if numeric==0
-%     WS(h<0.2)=0;
-%     gg=1
-% end
+Cqm1=[ Cq1(1,:); Cq1(1:end-1,:)];CqmN=[ CqN(:,1) CqN(:,1:end-1)];         
+
 
 %%%%USED for ACE Basin, south carolina
 %A(A==0)=2;
@@ -43,8 +41,35 @@ if computeriver==1;
 end
 
 
+
 Dxx=(Do*24*3600 +DiffS*Ttide/2.*(abs(Ux.*Ux))*(24*3600).^2)/(dx^2).*h;%.*h;%.*(ho>kro);%.*(hgross>0.01);%% the h is not the coefficient for diffusion, is the h in the mass balance eq.
 Dyy=(Do*24*3600 +DiffS*Ttide/2.*(abs(Uy.*Uy))*(24*3600).^2)/(dx^2).*h;%.*h;%.*(ho>kro);%.*(hgross>0.01);
+
+%Dxx(1:2,:)=0;Dyy(1:2,:)=0; %this one is the problem
+%Dxx(end-1:end,:)=0;Dyy(end-1:end,:)=0;
+
+%figure;imagesc(Dxx);pause
+
+% Dbase=(Do*24*3600)/(dx^2).*h;
+% qx=(q1+qm1)/2;
+% qy=(qN+qmN)/2;
+% qq=sqrt(qx.^2+qy.^2);
+% qx=abs(qx)./qq;
+% qy=abs(qy)./qq;
+% Dxx=Dbase.*qx;%.*h;%.*(ho>kro);%.*(hgross>0.01);%% the h is not the coefficient for diffusion, is the h in the mass balance eq.
+% Dyy=Dbase.*qy;%.*h;%.*(ho>kro);%.*(hgross>0.01);
+% end
+
+
+%Crazy test - SHOUDL NEVER BE USED!
+% % % Dtot=sqrt(Dxx.^2+Dyy.^2);
+% % % Dxx=Dtot;
+% % % Dyy=Dtot;
+
+
+
+
+
 
 
 Dxx(A>=10 & A<=19)=0;
@@ -54,8 +79,18 @@ Dxx(rivermouthfront)=0;Dyy(rivermouthfront)=0; %no tidal flux at the river mouth
 
 %Dxx=Dxx./fTide;
 %Dyy=Dyy./fTide;
-Dxx=Dxx.*max(0.01,fTide);
-Dyy=Dyy.*max(0.01,fTide);
+
+%teste remvoed jan 2025
+%Dxx=Dxx.*max(0.01,fTide);
+%Dyy=Dyy.*max(0.01,fTide);
+
+%removed feb 2025
+Dxx=Dxx.*fTide;
+Dyy=Dyy.*fTide;
+
+
+
+
 
 i=[];j=[];s=[];S=0*G;
 %[row col]=ind2sub(size(A),p);
@@ -73,11 +108,14 @@ a=a(A(q(a))==1 | A(q(a))==2 | (A(q(a))>=10 & A(q(a))<=19));%exlcude the translat
 %go over the extradiagonal direction for each gradient direction
 if (k==N | k==-N);D=Dyy;else;D=Dxx;end;
 
-if numeric==1
-DD=(D(p(a))+D(q(a)))/2;%THE ORIGINAL FOR MARSH fa piu' accumulo sui lati dei canali, cioe canali piou stretti
-elseif numeric==0
-DD=min(D(p(a)),D(q(a)));%fa meno levees on the sides. sopratutto con la sand
-end
+
+DD=(D(p(a))+D(q(a)))/2;%.*min(fTide(p(a)),fTide(q(a)));%THE ORIGINAL FOR MARSH fa piu' accumulo sui lati dei canali, cioe canali piou stretti
+DD(isnan(DD))=0;%new Oct 2025
+% if numeric==1
+% DD=(D(p(a))+D(q(a)))/2;%THE ORIGINAL FOR MARSH fa piu' accumulo sui lati dei canali, cioe canali piou stretti
+% elseif numeric==0
+%DD=min(D(p(a)),D(q(a)));%fa meno levees on the sides. sopratutto con la sand
+% end
 
 Fin=0*DD;Fin(A(p(a))==1)=1; % (A(q(a))==1 | A(q(a))==10)=1; to conserve the mass a the river mouth = no input
 Fout=0*DD;Fout(A(q(a))==1)=1; %needed not to affect the b.c. -> Do not choose 2 and 1p
@@ -90,12 +128,55 @@ value=DD./h(p(a));%./fTide(p(a));
 %figure;imagesc(URy);pause
 %river flow component
 if computeriver==1
+    %figure;imagesc(qN);pause
+
 up=[];F=0;
 if (k==N);UR=qN(p(a));up=find(UR>=0);F=UR(up);end %East-west
 if (k==-N);UR=qmN(p(a));up=find(UR<0);F=-UR(up);end
 if (k==1);UR=q1(p(a));up=find(UR>=0);F=UR(up);end  %North-south
 if (k==-1);UR=qm1(p(a));up=find(UR<0);F=-UR(up);end
-value(up)=value(up)+F*3600*24/dx./h(p(a(up)));%./fTide(p(a(up)));
+%value(up)=value(up)+F*3600*24/dx./h(p(a(up))).*min(fTide(p(a(up))),fTide(q(a(up)))).^1;%.*(fTide(p(a(up)))+fTide(q(a(up))))/2;
+%value(up)=value(up)+F*3600*24/dx./h(p(a(up))).*(fTide(p(a(up)))+fTide(q(a(up))))/2;%.*(fTide(p(a(up)))+fTide(q(a(up))))/2;BEST AUG 5th
+value(up)=value(up)+F*3600*24/dx./h(p(a(up))).*min(fTide(p(a(up))),fTide(q(a(up))));%.*(fTide(p(a(up)))+fTide(q(a(up))))/2;
+%value(up)=value(up)+F*3600*24/dx./h(p(a(up))).*min(fTide(p(a(up))),fTide(q(a(up))));
+%.*min(h(p(a(up))),h(q(a(up))))./(0.5*(h(p(a(up)))+h(q(a(up)))))
+% 
+% up=[];F=0;
+% if (k==N);UR=CqN(p(a)).*ho(q(a)).^2;up=find(UR>=0);F=UR(up);end %East-west
+% if (k==-N);UR=CqmN(p(a)).*ho(q(a)).^2;up=find(UR<0);F=-UR(up);end
+% if (k==1);UR=Cq1(p(a)).*ho(q(a)).^2;up=find(UR>=0);F=UR(up);end  %North-south
+% if (k==-1);UR=Cqm1(p(a)).*ho(q(a)).^2;up=find(UR<0);F=-UR(up);end
+% value(up)=value(up)+F*3600*24/dx./h(p(a(up)));%.*(fTide(p(a(up)))+fTide(q(a(up))))/2;
+
+% 
+% up=[];F=0;
+% if (k==N);UR=CqN(p(a)).*ho(q(a)).^2.*fTide(q(a));up=find(UR>=0);F=UR(up);end %East-west
+% if (k==-N);UR=CqmN(p(a)).*ho(q(a)).^2.*fTide(q(a));up=find(UR<0);F=-UR(up);end
+% if (k==1);UR=Cq1(p(a)).*ho(q(a)).^2.*fTide(q(a));up=find(UR>=0);F=UR(up);end  %North-south
+% if (k==-1);UR=Cqm1(p(a)).*ho(q(a)).^2.*fTide(q(a));up=find(UR<0);F=-UR(up);end
+% value(up)=value(up)+F*3600*24/dx./h(p(a(up)));%.*(fTide(p(a(up)))+fTide(q(a(up))))/2;
+
+% 
+%BEST FEB 2025
+up=[];F=0;
+if (k==N);UR=CqN(p(a)).*ho(q(a)).^2;up=find(UR>=0);F=UR(up);end %East-west
+if (k==-N);UR=CqmN(p(a)).*ho(q(a)).^2;up=find(UR<0);F=-UR(up);end
+if (k==1);UR=Cq1(p(a)).*ho(q(a)).^2;up=find(UR>=0);F=UR(up);end  %North-south
+if (k==-1);UR=Cqm1(p(a)).*ho(q(a)).^2;up=find(UR<0);F=-UR(up);end
+value(up)=value(up)+F*3600*24/dx./h(p(a(up)));%.*min(fTide(p(a(up))),fTide(q(a(up))));%.*(fTide(p(a(up)))+fTide(q(a(up))))/2;
+
+
+
+% up=[];F=0;
+% if (k==N);UR=CqN(p(a)).*ho(q(a)).^1*1;up=find(UR>=0);F=UR(up);end %East-west
+% if (k==-N);UR=CqmN(p(a)).*ho(q(a)).^1*1;up=find(UR<0);F=-UR(up);end
+% if (k==1);UR=Cq1(p(a)).*ho(q(a)).^1*1;up=find(UR>=0);F=UR(up);end  %North-south
+% if (k==-1);UR=Cqm1(p(a)).*ho(q(a)).^1*1;up=find(UR<0);F=-UR(up);end
+% value(up)=value(up)+F*3600*24/dx./h(p(a(up)));%.*min(fTide(p(a(up))),fTide(q(a(up))));%.*(fTide(p(a(up)))+fTide(q(a(up))))/2;
+
+
+%value(up)=value(up)+F*3600*24/dx./h(p(a(up)))./max(0.1,fTide(p(a(up))));
+%value(up)=value(up)+F*3600*24/dx./h(p(a(up))).*min(fTide(p(a(up))),fTide(q(a(up))));
 end
 
 S(p(a))=S(p(a))+value.*Fin; %exit from that cell
@@ -168,32 +249,47 @@ a=a(A(q(a))==2);
 
 %for each gradient direction
 if (k==N | k==-N);D=Dyy;else;D=Dxx;end;
-if numeric==1
-DD=(D(p(a))+D(q(a)))/2;%THE ORIGINAL FOR MARSH fa piu' accumulo sui lati dei canali, cioe canali piou stretti
-elseif numeric==0
-DD=min(D(p(a)),D(q(a)));%fa meno levees on the sides. sopratutto con la sand
-end
+DD=(D(p(a))+D(q(a)))/2;%.*min(fTide(p(a)),fTide(q(a)));%THE ORIGINAL FOR MARSH fa piu' accumulo sui lati dei canali, cioe canali piou stretti
+DD(isnan(DD))=0;%new Oct 2025
+% if numeric==1
+% DD=(D(p(a))+D(q(a)))/2;%THE ORIGINAL FOR MARSH fa piu' accumulo sui lati dei canali, cioe canali piou stretti
+% elseif numeric==0
+%DD=min(D(p(a)),D(q(a)));%fa meno levees on the sides. sopratutto con la sand
+% end
 
 %Tide
 Q=Q+sum(DD.*(SSM(p(a))./h(p(a))-SSM(q(a))./h(q(a)))); %exit from that cell
 %Q=Q+sum(       DD.*(  SSM(p(a))./h(p(a))./fTide(p(a))  -SSM(q(a))./h(q(a))./fTide(q(a)) )        ); %exit from that cell
 
-%River
+% %River -FOR STANRDAD CURRENT DIRECTION
+%if ebbflood==1;
 if computeriver==1;
-if (k==N); QR=QR+sum( SSM(p(a))./h(p(a)).*qN(p(a)) )*sign(k);end
-if (k==-N);QR=QR+sum( SSM(p(a))./h(p(a)).*qmN(p(a)))*sign(k);end
-if (k==1); QR=QR+sum( SSM(p(a))./h(p(a)).*q1(p(a))  )*sign(k);end
-if (k==-1);QR=QR+sum( SSM(p(a))./h(p(a)).*qm1(p(a)) )*sign(k);end
+ if (k==N); QR=QR+sum( SSM(p(a))./h(p(a)).*qN(p(a)) .*(qN(p(a))>0).*(fTide(p(a))+fTide(q(a)))/2 )*sign(k);end %rigth boudnary?
+ if (k==-N);QR=QR+sum( SSM(p(a))./h(p(a)).*qmN(p(a)).*(qmN(p(a))<0).*(fTide(p(a))+fTide(q(a)))/2)*sign(k);end %I think this is the left bounday
+ if (k==1); QR=QR+sum( SSM(p(a))./h(p(a)).*q1(p(a)) .*(q1(p(a))>0).*(fTide(p(a))+fTide(q(a)))/2 )*sign(k);end
+ if (k==-1);QR=QR+sum( SSM(p(a))./h(p(a)).*qm1(p(a)).*(qm1(p(a))<0).*(fTide(p(a))+fTide(q(a)))/2 )*sign(k);end
+% if (k==N); QR=QR+sum( SSM(p(a))./h(p(a)).*qN(p(a)) .*(qN(p(a))>0))*sign(k);end %rigth boudnary?
+% if (k==-N);QR=QR+sum( SSM(p(a))./h(p(a)).*qmN(p(a)).*(qmN(p(a))<0))*sign(k);end %I think this is the left bounday
+% if (k==1); QR=QR+sum( SSM(p(a))./h(p(a)).*q1(p(a)) .*(q1(p(a))>0))*sign(k);end
+% if (k==-1);QR=QR+sum( SSM(p(a))./h(p(a)).*qm1(p(a)).*(qm1(p(a))<0))*sign(k);end
 end
+%end
+
+%River -FOR INVERTED CURRENT DIRECTION
+%if ebbflood==-1;
+if computeriver==1;
+if (k==N); QR=QR+sum( SSM(q(a))./h(q(a)).*qmN(q(a)) .*(qmN(q(a))<0).*(fTide(p(a))+fTide(q(a)))/2)*sign(k);end
+if (k==-N);QR=QR+sum( SSM(q(a))./h(q(a)).*qN(q(a)) .*(qN(q(a))>0).*(fTide(p(a))+fTide(q(a)))/2)*sign(k);end
+if (k==1); QR=QR+sum( SSM(q(a))./h(q(a)).*qm1(q(a)) .*(qm1(q(a))<0).*(fTide(p(a))+fTide(q(a)))/2)*sign(k);end
+if (k==-1);QR=QR+sum( SSM(q(a))./h(q(a)).*q1(q(a))  .*(q1(q(a))>0).*(fTide(p(a))+fTide(q(a)))/2)*sign(k);end
+end
+%end
 
 end
 
 QseaTide=QseaTide+dx*dt*Q/rbulk; %(note the the divided dx is for the gradient, not for the cell width!)
 QseaRiver=QseaRiver+dt*3600*24*QR/rbulk;
 %%%%%%%%%%%%%%%%%%%
-
-
-
 
 
 
@@ -211,36 +307,62 @@ end
 %exlcude the translated cell that are the b.c.
 a=a(A(q(a))==10+i-1);
 if (k==N | k==-N);D=Dyy;else;D=Dxx;end
-if numeric==1%mud
-DD=(D(p(a))+D(q(a)))/2;%THE ORIGINAL FOR MARSH fa piu' accumulo sui lati dei canali, cioe canali piou stretti
-elseif numeric==0%sand
-DD=min(D(p(a)),D(q(a)));%fa meno levees on the sides. sopratutto con la sand
-end
+DD=(D(p(a))+D(q(a)))/2;%.*min(fTide(p(a)),fTide(q(a)));%THE ORIGINAL FOR MARSH fa piu' accumulo sui lati dei canali, cioe canali piou stretti
+DD(isnan(DD))=0;%new Oct 2025
+% if numeric==1%mud
+% DD=(D(p(a))+D(q(a)))/2;%THE ORIGINAL FOR MARSH fa piu' accumulo sui lati dei canali, cioe canali piou stretti
+% elseif numeric==0%sand
+%DD=min(D(p(a)),D(q(a)));%fa meno levees on the sides. sopratutto con la sand
+% end
 
 %Tide
 Q=Q+sum(DD.*(SSM(p(a))./h(p(a))-SSM(q(a))./h(q(a)))); %exit from that cell
 %Q=Q+sum(       DD.*(  SSM(p(a))./h(p(a))./fTide(p(a))  -SSM(q(a))./h(q(a))./fTide(q(a)) )        ); %exit from that cell
 
+
+
+
+
+
+%I think the way the sediment tranpostt (for River..+ Utide) is ahandles
+%differnelty ad A==10 and A==2, It is not perectly symmwetric. (June 2024%comment)
 % %River
+%if ebbflood==1;
 if computeriver==1;
-if (k==N); QR=QR+sum( SSM(q(a))./h(q(a)).*qmN(q(a)) )*sign(k);end
-if (k==-N);QR=QR+sum( SSM(q(a))./h(q(a)).*qN(q(a))  )*sign(k);end
-if (k==1); QR=QR+sum( SSM(q(a))./h(q(a)).*qm1(q(a)) )*sign(k);end
-if (k==-1);QR=QR+sum( SSM(q(a))./h(q(a)).*q1(q(a))  )*sign(k);end
+if (k==N); QR=QR+sum( SSM(q(a))./h(q(a)).*qmN(q(a)) .*(qmN(q(a))>0))*sign(k);end
+if (k==-N);QR=QR+sum( SSM(q(a))./h(q(a)).*qN(q(a))  .*(qN(q(a))>0))*sign(k);end
+if (k==1); QR=QR+sum( SSM(q(a))./h(q(a)).*qm1(q(a)) .*(qm1(q(a))>0))*sign(k);end
+if (k==-1);QR=QR+sum( SSM(q(a))./h(q(a)).*q1(q(a))  .*(q1(q(a))>0))*sign(k);end
 end
+%end
+
+%if ebbflood==-1;
+if computeriver==1;
+if (k==N); QR=QR+sum( SSM(p(a))./h(p(a)).*qN(p(a)) .*(qN(p(a))<0))*sign(k);end
+if (k==-N);QR=QR+sum( SSM(p(a))./h(p(a)).*qmN(p(a)).*(qmN(p(a))<0))*sign(k);end
+if (k==1); QR=QR+sum( SSM(p(a))./h(p(a)).*q1(p(a)) .*(q1(p(a))<0))*sign(k);end
+if (k==-1);QR=QR+sum( SSM(p(a))./h(p(a)).*qm1(p(a)).*(qm1(p(a))<0))*sign(k);end
+end
+%end
+
+
+
+
+
 
 end
+
 %pause
-QmouthTide=QmouthTide+dx*dt*Q/rbulk;
+QmouthTide=QmouthTide-dx*dt*Q/rbulk;
 QmouthRiver=QmouthRiver-dt*3600*24*QR/rbulk;
 %%%%%%%%%%%%%%%%%%%
 
 end
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 FLX=[QmouthRiver;QseaTide;QseaRiver;QmouthTide];
+
 
 
 
@@ -305,11 +427,12 @@ a=a(A(q(a))==2 & ABASE(q(a))>0);
 
 %for each gradient direction
 if (k==N | k==-N);D=Dyy;else;D=Dxx;end;
-if numeric==1
-DD=(D(p(a))+D(q(a)))/2;%THE ORIGINAL FOR MARSH fa piu' accumulo sui lati dei canali, cioe canali piou stretti
-elseif numeric==0
-DD=min(D(p(a)),D(q(a)));%fa meno levees on the sides. sopratutto con la sand
-end
+DD=(D(p(a))+D(q(a)))/2;%.*min(fTide(p(a)),fTide(q(a)));%THE ORIGINAL FOR MARSH fa piu' accumulo sui lati dei canali, cioe canali piou stretti
+% if numeric==1
+% DD=(D(p(a))+D(q(a)))/2;%THE ORIGINAL FOR MARSH fa piu' accumulo sui lati dei canali, cioe canali piou stretti
+% elseif numeric==0
+% DD=min(D(p(a)),D(q(a)));%fa meno levees on the sides. sopratutto con la sand
+% end
 
 %Tide
 SSC=SSM./h;%./fTide;

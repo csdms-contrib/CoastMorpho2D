@@ -21,26 +21,26 @@ Holateral=Ho;  %this imposes the lateral boundary condition when the flag AW=2 i
     %i is left ray (angle turnerd clockwise, positive, increase the angle, whcih means will go toward lower left (more high angle).
     %j is right ray
 
-% %condtions on the boundaries (directinoal spding imposed at the b.c.)   
-%     facsprdo=1;
-%     facsprdi=0.;
-%     facsprdj=0.;
-%     facsprdi2=0.;
-%     facsprdj2=0.;
-%     facsprdi3=0;
-%     facsprdj3=0;
-%     facsprdi4=0;
-%     facsprdj4=0;
-%%condtions on the boundaries (directinoal spding imposed at the b.c.)   
-    facsprdo=0.6;
-    facsprdi=0.1;
-    facsprdj=0.1;
-    facsprdi2=0.05;
-    facsprdj2=0.05;
-    facsprdi3=0.05;
-    facsprdj3=0.05;
+%condtions on the boundaries (directinoal spding imposed at the b.c.)   
+    facsprdo=1;
+    facsprdi=0.;
+    facsprdj=0.;
+    facsprdi2=0.;
+    facsprdj2=0.;
+    facsprdi3=0;
+    facsprdj3=0;
     facsprdi4=0;
     facsprdj4=0;
+%%condtions on the boundaries (directinoal spding imposed at the b.c.)   
+%     facsprdo=0.6;
+%     facsprdi=0.1;
+%     facsprdj=0.1;
+%     facsprdi2=0.05;
+%     facsprdj2=0.05;
+%     facsprdi3=0.05;
+%     facsprdj3=0.05;
+%     facsprdi4=0;
+%     facsprdj4=0;
     
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %   
 

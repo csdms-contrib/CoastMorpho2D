@@ -16,8 +16,8 @@ if k==m;aa=find(col+1<=n);end;if k==-m;aa=find(col-1>0);end;if k==-1;aa=find(row
 q=p+k;%the translated cell
 a=aa(A(q(aa))==1 );%only inclued the cells in whcih you can creep to
 
-%value=min(D(p(a)),D(q(a)));
-value=(D(p(a))+D(q(a)))/2;
+value=min(D(p(a)),D(q(a)));
+%value=(D(p(a))+D(q(a)))/2;
 
 S(p(a))=S(p(a))+value; %exit from that cell
 i=[i;G(q(a))]; j=[j;G(p(a))]; s=[s;-value]; %gain from the neigborh cell

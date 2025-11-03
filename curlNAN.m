@@ -1,11 +1,32 @@
-function c=curlNAN(Ux,Uy);
+function c=curlNAN(Ux,Uy,h);
 %c=(circshift(Ux,[1 0])-circshift(Ux,[-1 0]))/2-(circshift(Uy,[0 1])-circshift(Uy,[0 -1]))/2;
 %c=([Ux(2:end) Ux(end)]-circshift(Ux,[-1 0]))/2-(circshift(Uy,[0 1])-circshift(Uy,[0 -1]))/2;
 
-u1=circshift(Ux,[1 0])-Ux;
-u2=Ux-circshift(Ux,[-1 0]);
-v1=circshift(Uy,[0 1])-Uy;
-v2=Uy-circshift(Uy,[0 -1]);
+% u1=circshift(Ux,[1 0])-Ux;
+% u2=Ux-circshift(Ux,[-1 0]);
+% v1=circshift(Uy,[0 1])-Uy;
+% v2=Uy-circshift(Uy,[0 -1]);
+
+u1=[Ux(1,:); Ux(1:end-1,:)]-Ux;
+u2=Ux-[Ux(2:end,:); Ux(end,:)];
+v1=[Uy(:,1) Uy(:,1:end-1)]-Uy;
+v2=Uy-[Uy(:,2:end) Uy(:,end)];
+
+
+% u1=u1.*min(h,circshift(h,[1 0]))./h;
+% u2=u2.*min(h,circshift(h,[-1 0]))./h;
+% v1=v1.*min(h,circshift(h,[0 1]))./h;
+% v2=v2.*min(h,circshift(h,[0 -1]))./h;
+
+
+u1=u1.*min(h,[h(1,:)*0; h(1:end-1,:)])./h;
+u2=u2.*min(h,[h(2:end,:); h(end,:)*0])./h;
+v1=v1.*min(h,[h(:,1)*0 h(:,1:end-1)])./h;
+v2=v2.*min(h,[h(:,2:end) h(:,end)*0])./h;
+
+
+
+
 
 % u1=[Ux(1,:)*NaN; Ux(1:end-1,:)]-Ux;
 % u2=Ux-[Ux(2:end,:); Ux(end,:)*NaN];
@@ -35,13 +56,20 @@ c2=mean(tmp2,3,'omitnan');c2(isnan(c2))=0;
 c=c1-c2;
 c(isnan(Ux))=NaN;
 
-c=c/2;
-% c(:,end)=0;
-% c(:,1)=0;
-% c(end,:)=0;
-% c(1,:)=0;
 
-c(1,:)=NaN;
-c(end,:)=NaN;
-c(:,1)=NaN;
-c(:,end)=NaN;
+
+c=c/2;
+c(:,end)=0;
+c(:,1)=0;
+c(end,:)=0;
+c(1,:)=0;
+
+% c(1,:)=NaN;
+% c(end,:)=NaN;
+% c(:,1)=NaN;
+% c(:,end)=NaN;
+
+
+% figure
+% imagesc(c');caxis([-0.1 0.1]);colormap('jet')
+% pause

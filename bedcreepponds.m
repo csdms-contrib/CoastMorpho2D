@@ -16,8 +16,9 @@ creep(VEG==0)=crMUD;%+(alphaMUD*3600*24*Qs(VEG==0));
 creep(VEG==1)=crMARSH;    
 
 
-creepQs=A*0;
-creepQs(VEG==0)=(alphaMUD*3600*24*Qs(VEG==0));
+%creepQs=A*0;
+%creepQs(VEG==0)=(alphaMUD*3600*24*Qs(VEG==0));
+creepQs=alphaMUD*3600*24*Qs;
 
 %creepUc=A*0;
 %creepUc(VEG==1)=(0.0001*3600*24*deltaUC(VEG==1));
@@ -65,12 +66,20 @@ value=(D(p(a))+D(q(a)))/2 +(DQs(p(a))+DQs(q(a)))/2;%%  +max(DUc(p(a)),DUc(q(a)))
 %     valQS( (VEG(p(a))==1 & VEG(q(a))==0) | (VEG(p(a))==0 & VEG(q(a))==1) )*facQsbank;
 
 
+
+%TEST REMOVED APRIL 9 2025
 valQS=facQsbank*max(U(p(a)),U(q(a)));
+%valQS=min(facQsbank(p(a)),facQsbank(q(a))).*max(U(p(a)),U(q(a)));
 value( (VEG(p(a))==1 & VEG(q(a))==0) | (VEG(p(a))==0 & VEG(q(a))==1) )= Dcrbank+...
     valQS( (VEG(p(a))==1 & VEG(q(a))==0) | (VEG(p(a))==0 & VEG(q(a))==1) );
 
 
-value=value.*(Yreduction(p(a))+Yreduction(q(a)))/2;
+
+
+%value=value.*(Yreduction(p(a))+Yreduction(q(a)))/2;
+value=value.*max( (z(p(a))>z(q(a))).*Yreduction(p(a)) ,(z(q(a))>z(p(a))).*Yreduction(q(a)));%
+
+%sss=sum(value(:))
 
 
 %DO NOT CREEP AT THE POND EDGE

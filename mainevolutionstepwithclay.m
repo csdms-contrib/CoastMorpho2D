@@ -519,13 +519,14 @@ cur(Amin==0)=0;
         a_bankerosion(VEG==0)=a_bankerosionUNVEG;
         %[deltaY1,deltaY2,deltaY3,PedgeBANK,Y2OX,EdgeERY1,EdgeERY2,EdgeERY3]=EdgeerosionBANKPUSH(Pbank,Unx,Uny,z,a_bankerosion,999,fox,dt,dx,MASK,A,fracY1,fracY2,fracY3,Y2OX);
         [deltaY1,deltaY2,deltaY3,PedgeBANK,Y2OX,EdgeERY1,EdgeERY2,EdgeERY3]=EdgeerosionBANKPUSH(Pbank,Unx,Uny,z,a_bankerosion,maxedgeheight,fox,dt,dx,MASK,A,fracY1,fracY2,fracY3,Y2OX);
-        Y1=Y1-deltaY1;Y2=Y2-deltaY2;%Y3=Y3-deltaY3;%erode the mardsh edge fully
-        %EDGESED=diffuseedgesediments((A==1),EdgeERY2,0.1*ho.*Ubase,dx);Y2=Y2+EDGESED; %put eroded sediment only in chnannels, not on marsh
-        %EDGESED=diffuseedgesediments((A==1),EdgeERY1,0.1*ho.*Ubase,dx);Y1=Y1+EDGESED; %put eroded sediment only in chnannels, not on marsh
+        Y1=Y1-deltaY1;Y2=Y2-deltaY2;      
+        if computeclay==1;Y3=Y3-deltaY3;end
+    
         hDIF=ho;hDIF((deltaY1+deltaY2)>0)=1;%the eroded cell that diffuse the sediments
         EDGESED=diffuseedgesediments((A==1),EdgeERY2,0.01*hDIF,dx);Y2=Y2+EDGESED; %put eroded sediment only in chnannels, not on marsh
         EDGESED=diffuseedgesediments((A==1),EdgeERY1,0.01*hDIF,dx);Y1=Y1+EDGESED; %put eroded sediment only in chnannels, not on marsh
-        %figure;imagesc(deltaY1);pause
+        if computeclay==1; EDGESED=diffuseedgesediments((A==1),EdgeERY3,0.01*hDIF,dx);Y3=Y3+EDGESED; end%put eroded sediment only in chnannels, not on marsh
+        
 PLT.PedgeBANK=PedgeBANK;
     end
     
@@ -634,6 +635,7 @@ if computeSeaWave==1
     
   for i=1:Nhseawave
     %Uwave_seaI(:,:,i)=Uwave_seaI(:,:,i).*(VEG==0 & S==0);
+    
     if reduceerosionsubtical==1
     %Uwave_seaI(:,:,i)=Uwave_seaI(:,:,i).*(VEG==0 & S==0).*(Zlev<-0.3);
     Zwavereduction=-0.3;
@@ -642,6 +644,7 @@ if computeSeaWave==1
     else
     Uwave_seaI(:,:,i)=Uwave_seaI(:,:,i).*(VEG==0 & S==0);
     end
+    
     %DO NOT WRITE JUST TO SAVE COMPUTATION Hsea=Hsea.*(VEG==0 & S==0); %vegetation effect and no waves in isolated pond 9because we also redcued ws!!1)%Uwave_sea=Uwave_sea.*(VEG==0); Hsea=Hsea.*(VEG==0); %vegetation effect
   end
 else;Uwave_sea=0*A;Hsea=0*A;Fetch=0*A;QsWslope_sea=0*A;Uwave_seaI=NaN;Tp_seaI=NaN;end
@@ -667,12 +670,14 @@ if (computeEdgeErosionSea==1 | computeEdgeErosionSwell==1)%%%MASK=0*A+1;MASK(h<h
     if variableEDGEEROSION==0;awVAR=[];end
     
     [deltaY1,deltaY2,deltaY3,Pedge,Y2OX,EdgeERY1,EdgeERY2,EdgeERY3]=EdgeerosionSTRAT_3sedimentsXXX(PW,z,aw,maxedgeheight,fox,dt,dx,MASK,A,fracY1,fracY2,fracY3,Y2OX,variableEDGEEROSION,awVAR);
-    Y1=Y1-deltaY1;Y2=Y2-deltaY2;Y3=Y3-deltaY3;%erode the mardsh edge fully
+    Y1=Y1-deltaY1;Y2=Y2-deltaY2;%erode the mardsh edge fully
+    if computeclay==1;Y3=Y3-deltaY3;end
+    
     %Redistribute the eroded sediment
     EDGESED=diffuseedgesediments((A==1),EdgeERY2,0.1*ho,dx);Y2=Y2+EDGESED;
     EDGESED=diffuseedgesediments((A==1),EdgeERY1,0.1*ho,dx);Y1=Y1+EDGESED;
-    %EDGESED=diffuseedgesediments((A==1),EdgeERY2,h,dx);Y2=Y2+EDGESED;
-    %EDGESED=diffuseedgesediments((A==1),EdgeERY1,h+0.2,dx);Y1=Y1+EDGESED;
+    if computeclay==1;EDGESED=diffuseedgesediments((A==1),EdgeERY3,0.1*ho,dx);Y3=Y3+EDGESED;end
+    
 else;Pedge=A*0;end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -724,8 +729,16 @@ if (computetidalcurrent==1 | computeRiver==1)
         E2(A==2)=0; %needed for b.c.
         PLT.E2=E2;
         
+        if computeclay==1
         %(3)Total sediment resupension ORGANIC
+        %meclay=me/5;
+        [E3]=totalsedimenterosionMUDsine(ho,h,taucrclay,taucrclayVEG,VEG,meclay,kowave,MannSmud,fTide,U,FcrUT,FcrUTveg,hlimC,computetidalcurrent,US,hS,nSHALLOW,computeSeaWave,Uwave_seaI,Tp_seaI,computeSwellWave,UwaveMUD,Tp_swell,computeRiver,fMFriver,UR,flowdestroyVEG,B);
+        else
         E3=E2;
+        end
+        
+        E3(A==2)=0; %needed for b.c.
+        PLT.E3=E3;
     end
     
     
@@ -746,7 +759,15 @@ if (computetidalcurrent==1 | computeRiver==1)
         %E3=E3.*fracY3;
         %Elimit=max(0,Y3*conces)/dt*rbulk2;a=find(E3>Elimit);E3(a)=Elimit(a);
     end
-    
+        if computeclay==1;
+        E3o=E3;
+        % conces=1;%how much to extra erode, a parameter
+        %E2=E2.*fracY2;
+        Elimit=max(0,Y3*conces)/dt*rbulk3;a=find(E3>Elimit);E3(a)=Elimit(a);
+        %E2(Y2<0.2 & VEG==1)=0;
+        %E3=E3.*fracY3;
+        %Elimit=max(0,Y3*conces)/dt*rbulk2;a=find(E3>Elimit);E3(a)=Elimit(a);
+    end
     
     
     
@@ -794,7 +815,7 @@ Ttot=sqrt(TUnx.^2+TUny.^2);
         WS=A*0+ws1;
         %WS=WS.*(1+h/10);
         %WS=WS.*(0.5+0.1*(max(h,1)/1-1));
-        Wws1=WS;
+        %Wws1=WS;
         %WS=WS.*(1+0.1*(max(h,1)/1-1));
         %WS=WS.*(1+  1-exp(max-(h,1)));
       
@@ -852,8 +873,10 @@ Ttot=sqrt(TUnx.^2+TUny.^2);
         ADoMUD(VEG==1)=DoMUDveg;
         ADoMUD(VEG==1)=ADoMUD(VEG==1)+DoMUDsubgridVEG;
         
+        ADoMUD(A==2)=NaN;%Oct 2025 to allow adevctive flux out dring ebb
           
         fpekmud=1;%pi/2;%1./max(0.1,U);%1;%pi/2;
+        
         if computetidalcurrent==1
             if computeRiver==1
                 [EmD2ebb,SSMebb,FLX2,XXTide,XXRiver]=sedtran([],h,A,SPCLcell,ADoMUD,DiffSmud,Zlev,h,ho,E2,WS,dx,dt/2,rbulk2,co2,0,NaN,Ux,Uy,fTide,Ttide,qT1.*fpekmud+qR1,qTm1.*fpekmud+qRm1,qTN.*fpekmud+qRN,qTmN.*fpekmud+qRmN,-TUnx*facTmud,-TUny*facTmud,periodic,1,computetidalcurrent,residualcurrents,kro,co2mouth,FLX2,tracksedimentfluxes,XX);
@@ -866,14 +889,59 @@ Ttot=sqrt(TUnx.^2+TUny.^2);
             SSM=(SSMebb*0.5+SSMflo*0.5);
         else %no tidal currents
             [EmD2,SSM,FLX2,XXTide,XXRiver]=sedtran([],h,A,SPCLcell,ADoMUD,DiffSmud,Zlev,h,ho,E2,WS,dx,dt,rbulk2,co2,0,NaN,Ux,Uy,fTide,Ttide,qR1,qRm1,qRN,qRmN,A*0,A*0,periodic,1,computetidalcurrent,residualcurrents,kro,co2mouth,FLX2,tracksedimentfluxes,XX);
-        end      
-        
+        end     
+          
         PLT.XXTide2=XXTide;PLT.XXRiver2=XXRiver;
         if (computeRiver==1 & imposeNOerosiondepostionatmouthMUD==1);EmD2(A>=10 & A<=19)=0;end
     else;EmD2=0*A;SSM=0*A;end
     SSC2=SSM./h;%./fTide;  %devi metter i fTide per farti plottare la b.c quando il fondo e' sopra il MLW (ftide<1)
 
     
+    
+    
+  %ws3=ws2/5;
+  %rbulk3=rbulk2;
+  %co3mouth=co2mouth;
+    
+    if computeclay==1;
+        WS=A*0+ws3;
+        WS(VEG==1)=wsBclay;
+        WS(S==1)=ws3;%SHOULD NOT BE NECEEARY BECUASE VEG alreeady set equal to zero where S=1 (see above).  ->Do not add the vegetation settling velocity in the ponds! %WS(S==1)=0.000000000001;%E2(S==1)=0;
+        ADoMUD=A*0+DoMUD;
+        ADoMUD(VEG==1)=DoMUDveg;
+        ADoMUD(VEG==1)=ADoMUD(VEG==1)+DoMUDsubgridVEG;
+        
+        ADoMUD(A==2)=NaN;%Oct 2025
+        
+        fpekmud=1;%pi/2;%1./max(0.1,U);%1;%pi/2;
+        
+        if computetidalcurrent==1
+            if computeRiver==1
+                [EmD3ebb,SSMebb,FLX3,XXTide,XXRiver]=sedtran([],h,A,SPCLcell,ADoMUD,DiffSmud,Zlev,h,ho,E3,WS,dx,dt/2,rbulk3,co3,0,NaN,Ux,Uy,fTide,Ttide,qT1.*fpekmud+qR1,qTm1.*fpekmud+qRm1,qTN.*fpekmud+qRN,qTmN.*fpekmud+qRmN,-TUnx*facTmud,-TUny*facTmud,periodic,1,computetidalcurrent,residualcurrents,kro,co3mouth,FLX3,tracksedimentfluxes,XX);
+                [EmD3flo,SSMflo,FLX3,XXTide,XXRiver]=sedtran([],h,A,SPCLcell,ADoMUD,DiffSmud,Zlev,h,ho,E3,WS,dx,dt/2,rbulk3,co3,0,NaN,Ux,Uy,fTide,Ttide,-qT1.*fpekmud+qR1,-qTm1.*fpekmud+qRm1,-qTN.*fpekmud+qRN,-qTmN.*fpekmud+qRmN,-TUnx*facTmud,-TUny*facTmud,periodic,1,computetidalcurrent,residualcurrents,kro,co3mouth,FLX3,tracksedimentfluxes,XX);
+            elseif computeRiver==0                             
+                [EmD3ebb,SSMebb,FLX3,XXTide,XXRiver]=sedtran([],h,A,SPCLcell,ADoMUD,DiffSmud,Zlev,h,ho,E3,WS,dx,dt/2,rbulk3,co3,0,NaN,Ux,Uy,fTide,Ttide,qT1.*fpekmud,qTm1.*fpekmud,qTN.*fpekmud,qTmN.*fpekmud,-TUnx*facTmud,-TUny*facTmud,periodic,1,computetidalcurrent,residualcurrents,kro,co3mouth,FLX3,tracksedimentfluxes,XX);                           
+                [EmD3flo,SSMflo,FLX3,XXTide,XXRiver]=sedtran([],h,A,SPCLcell,ADoMUD,DiffSmud,Zlev,h,ho,E3,WS,dx,dt/2,rbulk3,co3,0,NaN,Ux,Uy,fTide,Ttide,-qT1.*fpekmud,-qTm1.*fpekmud,-qTN.*fpekmud,-qTmN.*fpekmud,-TUnx*facTmud,-TUny*facTmud,periodic,1,computetidalcurrent,residualcurrents,kro,co3mouth,FLX3,tracksedimentfluxes,XX);           
+            end
+            EmD3=(EmD3ebb*0.5+EmD3flo*0.5);
+            SSM=(SSMebb*0.5+SSMflo*0.5);
+        else %no tidal currents
+            [EmD3,SSM,FLX3,XXTide,XXRiver]=sedtran([],h,A,SPCLcell,ADoMUD,DiffSmud,Zlev,h,ho,E3,WS,dx,dt,rbulk3,co3,0,NaN,Ux,Uy,fTide,Ttide,qR1,qRm1,qRN,qRmN,A*0,A*0,periodic,1,computetidalcurrent,residualcurrents,kro,co3mouth,FLX3,tracksedimentfluxes,XX);
+        end     
+          
+        PLT.XXTide3=XXTide;PLT.XXRiver3=XXRiver;
+        if (computeRiver==1 & imposeNOerosiondepostionatmouthMUD==1);EmD3(A>=10 & A<=19)=0;end
+    else;EmD3=0*A;SSM=0*A;end
+    SSC3=SSM./h;%./fTide;  %devi metter i fTide per farti plottare la b.c quando il fondo e' sopra il MLW (ftide<1)
+
+    %figure
+   % subplot(2,1,1);imagesc(SSMebb'./h')
+   % subplot(2,1,2);imagesc(SSMflo'./h')
+   %pause
+%       figure
+%     subplot(2,1,1);imagesc(EmD3ebb')
+%     subplot(2,1,2);imagesc(EmD3flo')
+%     pause
     
 %     if VEGstratigraphy==1;
 %          %[EmD3,SSM,FLX3]=sedtran(flagSANDMUD,h,A,SPCLcell,DoMUD,DiffSmud,h,ho,E3,WS,dx,dt,rbulk2,co3,Ux,Uy,FLX3,fTide,Ttide,URx,URy,periodic,computeRiver,computetidalcurrent,kro,1,0,0);
@@ -890,7 +958,8 @@ else;EmD1=0*A;Qs1=0*A;tideE1=A*0;E1=A*0;EmD2=0*A;SSC=0*A;SSC1=A*0;SSC2=A*0;SSC3=
 %z=imposeboundarydepth(A,z,optionBC,NaN);
 if computesand==1;    Y1=Y1-dt*EmD1;end
 if computemud==1;     Y2=Y2-dt*EmD2;end
-if VEGstratigraphy==1;Y3=Y3-dt*EmD3;end
+if computeclay==1;     Y3=Y3-dt*EmD3;end
+%if VEGstratigraphy==1;Y3=Y3-dt*EmD3;end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -910,11 +979,19 @@ if AccreteOrganic==1
     if VEGstratigraphy==1
         Y3=Y3+B.*Korg*dt; %accrete the organic
     else; %put it with mud or sand
-        if VEGonsand==0
+        
+       % if computeclay==0
             Y2=Y2+B.*Korg*dt; % putorganic on mud!!!
-        else
-            Y1=Y1+B.*Korg*dt; % putorganic on sand!!!
-        end
+       % else
+       %     Y2=Y2+B.*Korg*dt/2; % putorganic on sand!!!
+        %    Y3=Y3+B.*Korg*dt/2; % putorganic on sand!!!
+        %end
+        
+        %if VEGonsand==0
+        %    Y2=Y2+B.*Korg*dt; % putorganic on mud!!!
+        %else
+        %    Y1=Y1+B.*Korg*dt; % putorganic on sand!!!
+        %end
     end
     BK=B.*Korg;
     KBTOT=KBTOT+sum(BK(A==1))*dt;
@@ -1090,11 +1167,12 @@ else;longshore=0;angleshore=0;end
 %EVOLUTION OF Y2
 if computemud==1;
     z=znew;  %NEED TO RE-UDPATED IT
-    %Y2red=Y2;
+    Yreduction=(1-min(1,exp(-10*(Y2)))).*fracY2;    %fracY2; %this is just for the marsh stratigraphy%FORSE PRIMA ERA PER UNA NO PER 10    %Yreduction=fracY2;  %this is for most of the simulations big basin % Yreduction(Yreduction<0.5)=0;
+    
     %Yreduction=(1-min(1,exp(-1*(Y2))));Yreduction(Y2>0.3)=1;
     %Yreduction=Yreduction.*fracY2;    %fracY2; %this is just for the marsh stratigraphy%FORSE PRIMA ERA PER UNA NO PER 10    %Yreduction=fracY2;  %this is for most of the simulations big basin % Yreduction(Yreduction<0.5)=0;
-    Yreduction=(Y2>0.3).*fracY2;
-    %Yreduction=(1-min(1,exp(-10*(Y2)))).*fracY2.*(Y2>0.5);    %fracY2; %this is just for the marsh stratigraphy%FORSE PRIMA ERA PER UNA NO PER 10    %Yreduction=fracY2;  %this is for most of the simulations big basin % Yreduction(Yreduction<0.5)=0;
+    
+    %Yreduction=(Y2>0.3).*fracY2;
     Qs2=E2o./(ws2*3600*24).*(U*fpekmud+UR).*max(hlimCdwnMUD,h); %kg/m/s
     
     %facQsbank=A*0+facQsbank;    facQsbank(Zlev>0.4)=facQsbank(Zlev>0.4)*0.1;%trees
@@ -1107,17 +1185,37 @@ if computemud==1;
 end
 
 %EVOLUTION OF Y3
-if computemud==1;
-    if VEGstratigraphy==1;
-        z=znew;  %NEED TO RE-UDPATED FROM THE Y1
-        Yreduction=fracY3;%fracY3; (1-min(1,exp(-1*(Y3)))).*%Yreduction(Yreduction<0.1)=0;%to reduce some starneg probelms with creep of two sediment swiht stratigraphy. negative creep!
-        znew=bedcreepponds(z,A,Active,Yreduction,crMUD,crMARSH,crbank,dx,dt,VEG,S);  %MUD CREEP
-        deltaY3=z-znew;Y3=Y3-deltaY3;
-    end
+if computeclay==1;
+    z=znew;  %NEED TO RE-UDPATED IT
+    Yreduction=(1-min(1,exp(-10*(Y3)))).*fracY3;    %fracY2; %this is just for the marsh stratigraphy%FORSE PRIMA ERA PER UNA NO PER 10    %Yreduction=fracY2;  %this is for most of the simulations big basin % Yreduction(Yreduction<0.5)=0;
+    
+    %Yreduction=(1-min(1,exp(-1*(Y3))));Yreduction(Y3>0.3)=1;
+    %Yreduction=Yreduction.*fracY3;    %fracY2; %this is just for the marsh stratigraphy%FORSE PRIMA ERA PER UNA NO PER 10    %Yreduction=fracY2;  %this is for most of the simulations big basin % Yreduction(Yreduction<0.5)=0;
+    
+    %Yreduction=(Y3>0.3).*fracY3;
+    Qs3=E3o./(ws3*3600*24).*(U*fpekmud+UR).*max(hlimCdwnMUD,h); %kg/m/s
+    
+    %facQsbank=A*0+facQsbank;    facQsbank(Zlev>0.4)=facQsbank(Zlev>0.4)*0.1;%trees
+    
+    znew=bedcreepponds(z,A,Active,Yreduction,crMUD,crMARSH,crbank,dx,dt,VEG,S,Qs3,rbulk3,alphaMUDclay,facQsbank,U+UR);%,deltaUC,a_bankcreep);  %MUD CREEP  MARSH
+    %znew=bedcreepponds(z,A,Active,Yreduction,crMUD,crMARSH,crbank,dx,dt,VEG,S,Qs2,rbulk2,alphaMUD,facQsbank,Ubase+UR);%,deltaUC,a_bankcreep);  %MUD CREEP  MARSH
+    deltaY3=z-znew;
+    deltaY3(A==2)=0;  %DO NOT UPDATE THE BOUNDARY
+    Y3=Y3-deltaY3;
 end
+[min(Y2(:)) min(Y3(:))]
+% %EVOLUTION OF Y3
+% if computemud==1;
+%     if VEGstratigraphy==1;
+%         z=znew;  %NEED TO RE-UDPATED FROM THE Y1
+%         Yreduction=fracY3;%fracY3; (1-min(1,exp(-1*(Y3)))).*%Yreduction(Yreduction<0.1)=0;%to reduce some starneg probelms with creep of two sediment swiht stratigraphy. negative creep!
+%         znew=bedcreepponds(z,A,Active,Yreduction,crMUD,crMARSH,crbank,dx,dt,VEG,S);  %MUD CREEP
+%         deltaY3=z-znew;Y3=Y3-deltaY3;
+%     end
+% end
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-min(Y2(:))
+
 if evolvestratigraphy==1;
     [Y1,Y2,Y3,Yb,flyr1,flyr2,flyr3,flyrb1,flyrb2,flyrb3,plyr]=stratigraphy2D_3sediments(A,Y1,Y2,Y3,Yb,flyr1,flyr2,flyr3,flyrb1,flyrb2,flyrb3,plyr,nlyr,dlyr,tlyrU,tlyrD);
 end
@@ -1201,7 +1299,7 @@ PLT.UR=UR;
 %if computetidalcurrent==1 | computeRiver==1;
 PLT.SSC1=SSC1;
 PLT.SSC2=SSC2;
-%PLT.SSC3=SSC3;
+PLT.SSC3=SSC3;
 %end
 %PLT.Uwave_sea=Uwave_sea;
 PLT.Hsea=Hsea;

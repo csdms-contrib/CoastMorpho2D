@@ -1,4 +1,4 @@
-function [bio]=plantbiomass_lateralexpansion(z,S,A,N,M,dx,dt,plantexpansionrate,bio,Active);
+function [bio]=plantbiomass_lateralexpansion(z,S,A,N,M,dx,dt,plantexpansionrate,bio,Active,Zlev,dBseed);
 
 p=find(bio>0);%find the existing ponds
 
@@ -14,7 +14,9 @@ if k==1;a=find(row+1<=N);end;
 
 q=p+k;%the translated cell
 %er=a(A(q(a))==1 & S(q(a))==0 ); %find the neightr cell that is a non-pond cell,  %orignal AWR
-er=a(A(q(a))==1 & bio(q(a))==0  & Active(q(a))==1); %find the neightr cell that is a non-pond cell, and is active
+%er=a(A(q(a))==1 & bio(q(a))==0  & Active(q(a))==1); %find the neightr cell that is a non-pond cell, and is active
+er=a(A(q(a))==1 & bio(q(a))==0  & Active(q(a))==1  & Zlev(q(a))>dBseed); %Modified Spet 4 2025
+
 
 
 %rng('shuffle');

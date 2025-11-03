@@ -58,17 +58,10 @@ value=0*A(p(a));
 
 
 %best jan 29 2025
-% if (k==N);UR=(URy(p(a))+URy(q(a)))/2.*min(h(p(a)),h(q(a)));up=find(UR>0);Y=UR(up);end %East-west
-% if (k==-N);UR=(URy(p(a))+URy(q(a)))/2.*min(h(p(a)),h(q(a)));up=find(UR<0);Y=-UR(up);end
-% if (k==1);UR=(URx(p(a))+URx(q(a)))/2.*min(h(p(a)),h(q(a)));up=find(UR>0);Y=UR(up);end  %North-south
-% if (k==-1);UR=(URx(p(a))+URx(q(a)))/2.*min(h(p(a)),h(q(a)));up=find(UR<0);Y=-UR(up);end
-
-
-if (k==N);UR=URy(p(a)).*min(h(p(a)),h(q(a)));up=find(UR>0);Y=UR(up);end %East-west
-if (k==-N);UR=URy(p(a)).*min(h(p(a)),h(q(a)));up=find(UR<0);Y=-UR(up);end
-if (k==1);UR=URx(p(a)).*min(h(p(a)),h(q(a)));up=find(UR>0);Y=UR(up);end  %North-south
-if (k==-1);UR=URx(p(a)).*min(h(p(a)),h(q(a)));up=find(UR<0);Y=-UR(up);end
-
+if (k==N);UR=(URy(p(a))+URy(q(a)))/2.*min(h(p(a)),h(q(a)));up=find(UR>0);Y=UR(up);end %East-west
+if (k==-N);UR=(URy(p(a))+URy(q(a)))/2.*min(h(p(a)),h(q(a)));up=find(UR<0);Y=-UR(up);end
+if (k==1);UR=(URx(p(a))+URx(q(a)))/2.*min(h(p(a)),h(q(a)));up=find(UR>0);Y=UR(up);end  %North-south
+if (k==-1);UR=(URx(p(a))+URx(q(a)))/2.*min(h(p(a)),h(q(a)));up=find(UR<0);Y=-UR(up);end
 
 value(up)=value(up)+alpha*Y/dx;
 %value(up)=value(up).*(1+ double(MASK(q(a(up)))==0));

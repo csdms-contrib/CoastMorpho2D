@@ -83,7 +83,8 @@ for i=1:length(edger)
             %This goes into resuspension. %This is what is conserved!!!
             EdgeERY1(edger(i))=EdgeERY1(edger(i))+dz.*fracY1(edger(i));%you cannot oxydize the sand!!!
             EdgeERY2(edger(i))=EdgeERY2(edger(i))+dz.*fracY2(edger(i))*(1-fox);
-            EdgeERY3(edger(i))=0;%EdgeERY3(edger(i))+dz.*fracY3(edger(i))*0;%(1-fox);the plant material is always oxidized
+            EdgeERY3(edger(i))=EdgeERY3(edger(i))+dz.*fracY3(edger(i))*1;
+            %EdgeERY3(edger(i))=0;%EdgeERY3(edger(i))+dz.*fracY3(edger(i))*0;%(1-fox);the plant material is always oxidized
                         
             
             %Keep track of how much you oxydeized!!!!

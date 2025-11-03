@@ -2,15 +2,27 @@ function F=diffusecurvature(A,F,alpha,dx,Ux,Uy);
 
 %Uo=U;
 
-U=sqrt(Ux.^2+Uy.^2);
-Ux=max(0.01,abs(Ux)./U);
-Uy=max(0.01,abs(Uy)./U);
+%U=sqrt(Ux.^2+Uy.^2);
+%Ux=max(0.01,abs(Ux)./U);
+%Uy=max(0.01,abs(Uy)./U);
 %Ux=abs(Ux)./U;
 %Uy=abs(Uy)./U;
 
+ U=sqrt(Ux.^2+Uy.^2);
+ Ux=max(0.001,abs(Ux)./U);
+ Uy=max(0.001,abs(Uy)./U);
+
 %%%only perdendicular to flow
- Dx=A.*(alpha*3600*24)/(dx^2).*Ux;
- Dy=A.*(alpha*3600*24)/(dx^2).*Uy;
+Dx=A.*(alpha*3600*24)/(dx^2).*Ux;
+Dy=A.*(alpha*3600*24)/(dx^2).*Uy;
+
+% %%%only perdendicular to flow
+%  Dx=A.*(alpha*3600*24)/(dx^2);%.*Ux;
+%  Dy=A.*(alpha*3600*24)/(dx^2);%.*Uy;
+%  if direction==2;Dx=Dx*0;end
+%  if direction==1;Dy=Dy*0;end
+ 
+ 
 
 % %all directions
 % %D=A*(alpha*3600*24)/(dx^2);
@@ -35,10 +47,11 @@ if k==m;aa=find(col+1<=n);end;if k==-m;aa=find(col-1>0);end;if k==-1;aa=find(row
 q=p+k;%the translated cell
 a=aa(A(q(aa))==1 );%only inclued the cells in whcih you can creep to
 
-if abs(k)==1;value=(Dx(p(a))+Dx(q(a)))/2;end
-if abs(k)==m;value=(Dy(p(a))+Dy(q(a)))/2;end
-%if abs(k)==1;value=min(Dx(p(a)),Dx(q(a)));end
-%if abs(k)==m;value=min(Dy(p(a)),Dy(q(a)));end
+%if abs(k)==1;value=(Dx(p(a))+Dx(q(a)))/2;end
+%if abs(k)==m;value=(Dy(p(a))+Dy(q(a)))/2;end
+if abs(k)==1;value=min(Dx(p(a)),Dx(q(a)));end
+if abs(k)==m;value=min(Dy(p(a)),Dy(q(a)));end
+
 %value=(D(p(a))+D(q(a)))/2;
 
 S(p(a))=S(p(a))+value; %exit from that cell

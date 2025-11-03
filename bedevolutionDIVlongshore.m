@@ -1,4 +1,4 @@
-function [z,FQsW_L,FQsW_R,longshore,angleshore]=bedevolutionDIV(deltaPW,U,fTide,A,AW,z,Zlev,wl,ho,Y,Yreduction,VEG,N,M,dt,dx,Trange,Qs,rbulk,hwSwelltransport_lim,computewave,QsWslope,QsWon,angleswell,waveANGLE,Active,periodic,wavetransportzerolateralgradient,gridDIR,FQsW_L,FQsW_R);
+function [z,FQsW_L,FQsW_R,longshore,angleshore]=bedevolutionDIV(deltaPW,U,fTide,A,AW,z,Zlev,wl,ho,Y,Yreduction,VEG,N,M,dt,dx,Trange,crSAND,hDlo,hDhi,pDo,pDm,Qs,reduceSANDbankVEG,rbulk,hwSwelltransport_lim,computewave,QsWslope,QsWon,angleswell,waveANGLE,Active,periodic,wavetransportzerolateralgradient,gridDIR,FQsW_L,FQsW_R);
 %NOTES
 %remember in the min(h(p,0.1). These are "explicit term. You need to use
 %the old values when re-evaluatign the fluxes
@@ -13,6 +13,8 @@ A(Active==0)=0; %eliminate the cells in which the water depth is too small
 
 h=wl-z;%water depth for morphology
 hold=h;
+
+%figure;plot(wl);pause
 
 QsWon=0.2*QsWon;%0.2 %This is really the alongwave, not the onshore (the onshore is Qswon projected on x)
 QsWslope=1*QsWslope;
@@ -35,7 +37,9 @@ Qsradstress=deltaPW*longshoretransportcoefficient;
 %Downslope component of the longshore transport caused by radiation stress wave breakoing)
 QsWslope_longshore=deltaPW*longshoretransportcoefficient*15;%    *2;%*2;%2.5;%4;  %needed to avoid le buche!!!
 
-D=(3600*24*Qs)*dt/(dx^2);
+%D=(3600*24*Qs)*dt/(dx^2);
+D=(3600*24*Qs +crSAND)*dt/(dx^2);
+
 
 
 %REDUCTION FOR SED THICKNESS
@@ -86,8 +90,43 @@ for k = [N -N 1 -1]  % is left to right along the profile. If you take off N-N -
    
     %Current downslope flux Qs 
     %valueC=max(D(p(a)),D(q(a))).*(Yreduction(p(a))+Yreduction(q(a)))/2   .*(Y(p(a))>-0.5 & Y(q(a))>-0.5); 
-    valueC=max(D(p(a)),D(q(a))).*(Yreduction(p(a))+Yreduction(q(a)))/2   .*max( (z(p(a))>z(q(a))).*(Y(p(a))>-0.1) ,(z(q(a))>z(p(a))).*(Y(q(a))>-0.1));%  l      (Y(p(a))>-0.5 & Y(q(a))>-0.5);   %valueC=(D(p(a))+D(q(a)))/2.*(Yreduction(p(a))+Yreduction(q(a)))/2;
-  
+ 
+    %USED FOR BARNSTA AND PIE PAPERS
+    %valueC=max(D(p(a)),D(q(a))).*(Yreduction(p(a))+Yreduction(q(a)))/2   .*max( (z(p(a))>z(q(a))).*(Y(p(a))>-0.1) ,(z(q(a))>z(p(a))).*(Y(q(a))>-0.1));%  l      (Y(p(a))>-0.5 & Y(q(a))>-0.5);   %valueC=(D(p(a))+D(q(a)))/2.*(Yreduction(p(a))+Yreduction(q(a)))/2;
+    
+    %USED FOR NEW DELTA MODEL AFTER Jan 2024
+    %acurally we dont continue using in the main code after March 2024
+   
+    
+   %New
+%    aUPWND=0.99;
+%     valueC=(  (z(p(a))>z(q(a))).*(D(p(a))*aUPWND+D(q(a))*(1-aUPWND))   +(z(q(a))>z(p(a))).*(D(q(a))*aUPWND+D(p(a))*(1-aUPWND))   )...
+%     .*max( (z(p(a))>z(q(a))).*Yreduction(p(a)) ,(z(q(a))>z(p(a))).*Yreduction(q(a)) );    %  (Y(p(a))>-0.5 & Y(q(a))>-0.5);   %valueC=(D(p(a))+D(q(a)))/2.*(Yreduction(p(a))+Yreduction(q(a)))/2;
+% %     
+
+%New 8 19 2024
+   ap=min(1,max(0,(h(p(a))-hDlo)/hDhi));ap=ap*(pDm-pDo)+pDo;
+   aq=min(1,max(0,(h(q(a))-hDlo)/hDhi));aq=aq*(pDm-pDo)+pDo;
+   valueC=(  (z(p(a))>z(q(a))).*(D(p(a)).*(1-ap) +D(q(a)).*ap)...
+            +(z(q(a))>z(p(a))).*(D(q(a)).*(1-aq) +D(p(a)).*aq)   )...
+   .*max( (z(p(a))>z(q(a))).*Yreduction(p(a)) ,(z(q(a))>z(p(a))).*Yreduction(q(a)) );% .*max(h(p(a)),h(q(a)))./((h(p(a))+h(q(a)))/2) ;    %  (Y(p(a))>-0.5 & Y(q(a))>-0.5);   %valueC=(D(p(a))+D(q(a)))/2.*(Yreduction(p(a))+Yreduction(q(a)))/2;
+   
+
+   %BESTA USED THE MOST
+   %valueC=(D(p(a))+D(q(a)))/2.*max( (z(p(a))>z(q(a))).*Yreduction(p(a)) ,(z(q(a))>z(p(a))).*Yreduction(q(a)) );%   .*max( (z(p(a))>z(q(a))).*(Y(p(a))>0) ,(z(q(a))>z(p(a))).*(Y(q(a))>0));%  l        (Y(p(a))>-0.5 & Y(q(a))>-0.5);   %valueC=(D(p(a))+D(q(a)))/2.*(Yreduction(p(a))+Yreduction(q(a)))/2;
+
+   %erosion reduction at the vegeated bank
+   valueC( (VEG(p(a))==1 & VEG(q(a))==0) | (VEG(p(a))==0 & VEG(q(a))==1) )= ...
+   reduceSANDbankVEG*valueC( (VEG(p(a))==1 & VEG(q(a))==0) | (VEG(p(a))==0 & VEG(q(a))==1) );
+
+
+% 
+% %reduce downslope if dry cells
+% hm=min(h(q(a)),h(p(a)));
+% valueC(hm<0.2)=valueC(hm<0.2)*0.1;
+%
+
+    
     valueWS=0*p(a); 
     valueWA=0*p(a);  
     valueWL=0*p(a);     
@@ -106,7 +145,7 @@ for k = [N -N 1 -1]  % is left to right along the profile. If you take off N-N -
    
     %Waves (Swell+Sea) DOWNSLOPE flux 
     valueWS=valueWS+(QsWslope(p(a))+QsWslope(q(a)))/2*dt/dx^2 .*(VEG(p(a))==0 & VEG(q(a))==0);    %.*min(Yreduction(p(a)),Yreduction(q(a)));% .*(VEG(p(a))==0 & VEG(q(a))==0);   
-    
+
     %Swell DOWNSLOPE flux due to BREAKING
     valueWS=valueWS+(QsWslope_longshore(p(a))+QsWslope_longshore(q(a)))/2*dt/dx^2 ; %.*min(Yreduction(p(a)),Yreduction(q(a)));
          
