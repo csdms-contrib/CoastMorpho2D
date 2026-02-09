@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Mariotti"
+  given-names: "Giulio"
+  orcid: "https://orcid.org/0000-0002-0426-5415"
+title: "CoastMorpho2D"
+version: 5.1
+date-released: 2026-02-09
+url: "https://csdms.colorado.edu/wiki/Model:CoastMorpho2D"
+repository-code: "https://github.com/csdms-contrib/CoastMorpho2D"
