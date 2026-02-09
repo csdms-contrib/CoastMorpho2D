@@ -1,4 +1,4 @@
-function [U,Ux,Uy,U1,Um1,UN,UmN,q1,qm1,qN,qmN]=flowBasin(A,manning,h,ho,dx,DH,T,periodic,kro,DD1,DDN,DDUlimit,tidalnonlinearflow,Ubase,fTide,ahBNK);
+function [U,UxNOADV,UyNOADV,U1,Um1,UN,UmN,q1,qm1,qN,qmN,Uebb,Ufld]=flowBasin(A,manning,h,ho,dx,DH,T,periodic,kro,DD1,DDN,DDUlimit,tidalnonlinearflow,Ubase,fTide,ahBNK);
 %facADVh=0.5;
 %factorU=factorU.^2;
 %manning=manning./factorU;
@@ -140,9 +140,9 @@ Icsim=min(Icsi(p(a)),Icsi(q(a)));%
 %Icsim=0.5*((Icsi(p(a))+Icsi(q(a)))/2 + min(Icsi(p(a)),Icsi(q(a))));%.*max(factorU(p(a)),factorU(q(a)));
 %Icsim=max(Icsi(p(a)),Icsi(q(a)));
 
-hm=0.5*(min(h(p(a)),h(q(a)))  + (h(p(a))+h(q(a)))/2 );
-%hm=min(h(p(a)),h(q(a)));%
-
+%hm=0.5*(min(h(p(a)),h(q(a)))  + (h(p(a))+h(q(a)))/2 );
+hm=min(h(p(a)),h(q(a)));%
+%hm=(h(p(a))+h(q(a)))/2;
 %hm=0.5*(hm+hmin);
 
 
@@ -190,8 +190,10 @@ Icsim=min(Icsi(p(a)),Icsi(q(a)));%
 %Icsim=max(Icsi(p(a)),Icsi(q(a)));
 
 
-hm=0.5*(min(h(p(a)),h(q(a)))  + (h(p(a))+h(q(a)))/2 );
-%hm=min(h(p(a)),h(q(a)));%originla
+%hm=0.5*(min(h(p(a)),h(q(a)))  + (h(p(a))+h(q(a)))/2 );
+hm=min(h(p(a)),h(q(a)));%originla
+%hm=(h(p(a))+h(q(a)))/2;
+
 %hm=max(h(p(a)),h(q(a)));%
 
 %hm=0.5*(hm+hmin);
@@ -277,3 +279,71 @@ U=sqrt(Ux.^2+Uy.^2);
 % Amin=min(Amin,[A(:,1) A(:,1:end-1)]);
 % Amin=min(Amin,[A(:,2:end) A(:,end) ]);
 %U(Amin==0)=0;
+
+
+
+
+
+
+%655664362435367878r44trfvrrg
+%655664362435367878r44trfvrrg
+%655664362435367878r44trfvrrg
+%655664362435367878r44trfvrrg
+UxNOADV=Ux;
+UyNOADV=Uy;
+
+
+%UxR=[Ux(1,:); Ux(1:end-1,:)];
+%UxL=[Ux(2:end,:); Ux(end,:)];
+%UyU=[Uy(:,1) Uy(:,1:end-1)];
+%UyD=[Uy(:,2:end) Uy(:,end)];
+UxR=[Ux(:,1) Ux(:,1:end-1)];
+UxL=[Ux(:,2:end) Ux(:,end)];
+UyU=[Uy(1,:); Uy(1:end-1,:)];
+UyD=[Uy(2:end,:); Uy(end,:)];
+
+
+
+
+diry=(q1+qm1)/2;
+dirx=(qN+qmN)/2;
+a=find(dirx>0);
+b=find(dirx<0);
+%Ux(a)=UxR(a);
+%Ux(b)=UxL(b);
+Ux(a)=(UxR(a)+UxNOADV(a))/2;
+Ux(b)=(UxL(b)+UxNOADV(b))/2;
+
+a=find(diry>0);
+b=find(diry<0);
+%Uy(a)=UyU(a);
+%Uy(b)=UyD(b);
+Uy(a)=(UyU(a)+UyNOADV(a))/2;
+Uy(b)=(UyD(b)+UyNOADV(b))/2;
+
+Uebb=sqrt(Ux.^2+Uy.^2);
+%Uebb=U;
+
+
+
+Ux=A*0;Uy=A*0;
+diry=-(q1+qm1)/2;
+dirx=-(qN+qmN)/2;
+a=find(dirx>0);
+b=find(dirx<0);
+%Ux(a)=UxR(a);
+%Ux(b)=UxL(b);
+Ux(a)=(UxR(a)+UxNOADV(a))/2;
+Ux(b)=(UxL(b)+UxNOADV(b))/2;
+
+a=find(diry>0);
+b=find(diry<0);
+%Uy(a)=UyU(a);
+%Uy(b)=UyD(b);
+Uy(a)=(UyU(a)+UyNOADV(a))/2;
+Uy(b)=(UyD(b)+UyNOADV(b))/2;
+
+Ufld=sqrt(Ux.^2+Uy.^2);
+%Ufld=U;
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%

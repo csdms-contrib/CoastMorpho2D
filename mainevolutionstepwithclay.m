@@ -133,7 +133,7 @@ if VEGETATION==1;
     
     %SEASONAL
     if VEGseasonal==1
-    Zseasonal=-0.3;
+    Zseasonal=-0.1;%%%ssiii
     %B(Zlev>-0.3 & Zlev<dBlo)=0.01;%floating vegetion
     VEG(Zlev>Zseasonal)=1;%floating vegetion
     end
@@ -243,7 +243,7 @@ if computeRiver==1;
     else
         URo=URfrictiono;
     end
-    [UR,URx,URy,hriver,qR1,qRm1,qRN,qRmN,Utr]=riverFLOWiter(A,MannHR,h,ho,dx,fTide,Qmouth,URo,directionQ,imposenocrossflux,FcrUR,[],[],DDUlimit,ahBNK);%hriver=max(hriver, max(0,-z));
+    [UR,URx,URy,hriver,qR1,qRm1,qRN,qRmN,Utr]=riverFLOWiter(A,MannHR,h,ho,dx,fTide,Qmouth,URo,directionQ,imposenocrossflux,FcrUR,[],[],DDUlimit,ahBNK,simulteflowDelft3d);%hriver=max(hriver, max(0,-z));
     
     
     if riverwaterlevel==1 | correctmomentumriver==1
@@ -277,7 +277,7 @@ if computeRiver==1;
             end
             
             
-            [UR,URx,URy,hriver,qR1,qRm1,qRN,qRmN,Utr]=riverFLOWiter(A,MannHR,h,ho,dx,fTide,Qmouth,URo,directionQ,imposenocrossflux,FcrUR,[],[],DDUlimit,ahBNK);%hriver=max(hriver, max(0,-z));PLT.hriver=hriver;
+            [UR,URx,URy,hriver,qR1,qRm1,qRN,qRmN,Utr]=riverFLOWiter(A,MannHR,h,ho,dx,fTide,Qmouth,URo,directionQ,imposenocrossflux,FcrUR,[],[],DDUlimit,ahBNK,simulteflowDelft3d);%hriver=max(hriver, max(0,-z));PLT.hriver=hriver;
             EX=max((h(A>0)>checkerrorh).*abs(hriver(A>0)-hpRIV(A>0)));            %EX= prctile((h(:)>2 & A(:)~=0).*abs(hriver(:)-hpRIV(:)),99.99);
             EXh=EX;
             EX=max(EX,errorUUfac*max((UR(A>0)>checkerrorU).*(h(A>0)>checkerrorh).*abs(URprevious(A>0)-UR(A>0))));            %EX= prctile((h(:)>2 & A(:)~=0).*abs(hriver(:)-hpRIV(:)),99.99);
@@ -311,12 +311,14 @@ if computeRiver==1;
     %UR=min(UR,FcrURflow*sqrt(9.81*h));
     %UR(h<0.5)=min(UR(h<0.5),FcrURflow*sqrt(9.81*h(h<0.5)));
     %UR=min(UR,4);
-    
-    
     UR=Utr;
     %UR=min(UR,FcrURflow*sqrt(9.81*h));
     
 else;URtr=0*A;UR=0*A;URy=0*A;URx=0*A;qR1=NaN;qRm1=NaN;qRN=NaN;qRmN=NaN; end
+
+
+
+
 
 
 
@@ -378,7 +380,9 @@ if computetidalcurrent==1;
     if addextratidalprismatriverboundary==1
     %DHE(A==10)=DHE(A==10)+2*50000*Trange_o/dx; %20 km, 4 time larger than the mouth    %300mx4=1200 m %Estuary
     %DHE(A==10)=DHE(A==10)*50000*Trange_o/dx;%*10/1; %20 km, 4 time larger than the mouth 300mx4=1200 m %Wax Lake Delta
-    DHE(A==10)=DHE(A==10)*100000*Trange_o/dx;%*10/1; %20 km, 4 time larger than the mouth 300mx4=1200 m %Wax Lake Delta %MOR AUG 2025
+    %DHE(A==10)=DHE(A==10)*100000*Trange_o/dx;%*10/1; %20 km, 4 time larger than the mouth 300mx4=1200 m %Wax Lake Delta %MOR AUG 2025
+    %DHE(A==10)=DHE(A==10)*50000*Trange_o/dx;%*10/1; %20 km, 4 time larger than the mouth 300mx4=1200 m %Wax Lake Delta %MOR AUG 2025
+    DHE(A==10)=DHE(A==10)*PRSIMLENGTH*Trange_o/dx;%*10/1; %20 km, 4 time larger than the mouth 300mx4=1200 m %Wax Lake Delta %MOR AUG 2025
     %the 10/1 is the factor 2500 ms / 250 m (the cross section)
     end
     
@@ -396,14 +400,15 @@ if computetidalcurrent==1;
     %UTfric=max(0.01,U);
     %UTfric=max(0.01,sqrt(UTfric.*U));
     %Utt=U;
-    [U,Uy,Ux,~,~,~,~,qT1,qTm1,qTN,qTmN]=tidalFLOWasymmetry(A,MannH,h,ho,dx,DHE,Ttide,periodic,kro,A*0,A*0,DDUlimit,tidalnonlinearflow,UTfric,fTide,ahBNK);
-    end
+    %[U,Uy,Ux,~,~,~,~,qT1,qTm1,qTN,qTmN]=tidalFLOWasymmetry(A,MannH,h,ho,dx,DHE,Ttide,periodic,kro,A*0,A*0,DDUlimit,tidalnonlinearflow,UTfric,fTide,ahBNK);
+    [U,Uy,Ux,~,~,~,~,qT1,qTm1,qTN,qTmN,Uebb,Ufld]=tidalFLOWasymmetry(A,MannH,h,ho,dx,DHE,Ttide,periodic,kro,A*0,A*0,DDUlimit,tidalnonlinearflow,UTfric,fTide,ahBNK);
+   end
 
   
     
     %U(A==10)=0;Ux(A==10)=0;Uy(A==10)=0;
     Ubase=U;PLT.Ubase=Ubase;
-else;U=0*A;Uy=0*A;Ux=0*A;qT1=A*0;qTN=A*0;qTm1=A*0;qTmN=A*0;UTref=NaN;end
+else;U=0*A;Uy=0*A;Ux=0*A;qT1=A*0;qTN=A*0;qTm1=A*0;qTmN=A*0;UTref=NaN;Uebb=A*0;Ufld=A*0;end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -504,7 +509,7 @@ cur(Amin==0)=0;
 
   
     %recalculate the tidal flow  !!!! 
-    [U,Uy,Ux,~,~,~,~,qT1,qTm1,qTN,qTmN]=tidalFLOWasymmetry(A,MannH./factorU,h,ho,dx,DHE,Ttide,periodic,kro,A*0,A*0,DDUlimit,tidalnonlinearflow,UTfric,fTide,ahBNK);
+    [U,Uy,Ux,~,~,~,~,qT1,qTm1,qTN,qTmN,Uebb,Ufld]=tidalFLOWasymmetry(A,MannH./factorU,h,ho,dx,DHE,Ttide,periodic,kro,A*0,A*0,DDUlimit,tidalnonlinearflow,UTfric,fTide,ahBNK);
     %[U,Uy,Ux,~,~,~,~,qT1,qTm1,qTN,qTmN]=tidalFLOWasymmetry(A,MannH,factorU,h,ho,dx,DHE,Ttide,periodic,kro,A*0,A*0,DDUlimit,tidalnonlinearflow,UTfric,fTide,ahBNK);
     
     
@@ -539,20 +544,33 @@ end
 
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%Connect the channel corners%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-if connectchannelcorners==1
-    MASKflow=double(VEG==0);
-    MASKflow1=bwmorph(MASKflow,'bridge');
-    MASKflow2=bwmorph(MASKflow1,'diag');
-    fU=0.2;
-    Ufmax=max(U/fU,[U(:,1) U(:,1:end-1)]);
-    Ufmax=max(Ufmax,[U(:,2:end) U(:,end)]);
-    Ufmax=max(Ufmax,[U(1,:); U(1:end-1,:)]);
-    Ufmax=max(Ufmax,[U(2:end,:); U(end,:)]);
-    U(MASKflow2==1 & MASKflow==0)=fU*Ufmax(MASKflow2==1 & MASKflow==0);
-end
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% %Connect the channel corners%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% if connectchannelcorners==1
+%     MASKflow=double(VEG==0);
+%     MASKflow1=bwmorph(MASKflow,'bridge');
+%     MASKflow2=bwmorph(MASKflow1,'diag');
+%     fU=0.2;
+% 
+%     Ufmax=max(U/fU,[U(:,1) U(:,1:end-1)]);
+%     Ufmax=max(Ufmax,[U(:,2:end) U(:,end)]);
+%     Ufmax=max(Ufmax,[U(1,:); U(1:end-1,:)]);
+%     Ufmax=max(Ufmax,[U(2:end,:); U(end,:)]);
+%     U(MASKflow2==1 & MASKflow==0)=fU*Ufmax(MASKflow2==1 & MASKflow==0);
+% 
+%     Ufmax=max(Uebb/fU,[Uebb(:,1) Uebb(:,1:end-1)]);
+%     Ufmax=max(Ufmax,[Uebb(:,2:end) Uebb(:,end)]);
+%     Ufmax=max(Ufmax,[Uebb(1,:); Uebb(1:end-1,:)]);
+%     Ufmax=max(Ufmax,[Uebb(2:end,:); Uebb(end,:)]);
+%     Uebb(MASKflow2==1 & MASKflow==0)=fU*Ufmax(MASKflow2==1 & MASKflow==0);
+% 
+%     Ufmax=max(Ufld/fU,[Ufld(:,1) Ufld(:,1:end-1)]);
+%     Ufmax=max(Ufmax,[Ufld(:,2:end) Ufld(:,end)]);
+%     Ufmax=max(Ufmax,[Ufld(1,:); Ufld(1:end-1,:)]);
+%     Ufmax=max(Ufmax,[Ufld(2:end,:); Ufld(end,:)]);
+%     Ufld(MASKflow2==1 & MASKflow==0)=fU*Ufmax(MASKflow2==1 & MASKflow==0);
+% end
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 
@@ -634,23 +652,28 @@ if computeSeaWave==1
     [Uwave_seaI,Tp_seaI,Hsea,Fetch,PWsea,QsWslope_sea]=SeaWaves_multipleheightHHH(A,WINDdir,hwSea_lim,Trange,WINDspeed,VEG,64,Nhseawave,dx,z,msl,tempdeltaMSL,hpRIV,ws1,fTide,extraHseaimposed,addextrafetch,extrafetch); %72,dx
     
   for i=1:Nhseawave
-    %Uwave_seaI(:,:,i)=Uwave_seaI(:,:,i).*(VEG==0 & S==0);
-    
-    if reduceerosionsubtical==1
-    %Uwave_seaI(:,:,i)=Uwave_seaI(:,:,i).*(VEG==0 & S==0).*(Zlev<-0.3);
-    Zwavereduction=-0.3;
-    facwavereduction=0.2;
-    Uwave_seaI(:,:,i)=Uwave_seaI(:,:,i).*(VEG==0 & S==0).*(1-facwavereduction*(Zlev>Zwavereduction));
-    else
     Uwave_seaI(:,:,i)=Uwave_seaI(:,:,i).*(VEG==0 & S==0);
-    end
-    
     %DO NOT WRITE JUST TO SAVE COMPUTATION Hsea=Hsea.*(VEG==0 & S==0); %vegetation effect and no waves in isolated pond 9because we also redcued ws!!1)%Uwave_sea=Uwave_sea.*(VEG==0); Hsea=Hsea.*(VEG==0); %vegetation effect
   end
 else;Uwave_sea=0*A;Hsea=0*A;Fetch=0*A;QsWslope_sea=0*A;Uwave_seaI=NaN;Tp_seaI=NaN;end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %size(Uwave_seaI)
 %figure;imagesc(Uwave_seaI(:,:,1));pause
+
+
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%     if reduceerosionsubtical==1
+%     %Zwavereduction=-0.3;
+%     Zwavereduction=-0.3;
+%     facwavereduction=0.5;%0.1;
+%     Uwave=Uwave.*(1-facwavereduction*(Zlev>Zwavereduction));
+%     for i=1:Nhseawave
+%     Uwave_seaI(:,:,i)=Uwave_seaI(:,:,i).*(1-facwavereduction*(Zlev>Zwavereduction));
+%     end
+%     end
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 
 
 
@@ -710,8 +733,13 @@ if (computetidalcurrent==1 | computeRiver==1)
 %             [E1F]=totalsedimenterosionSANDsine(h,hlimC,kro,MannSsand,rho,rhos,ss,d50_1,ws1,fTide,computetidalcurrent,Vflood,FcrUT,calculateshallowflow,US,hS,nSHALLOW,computeRiver,UR,fMFriver);
 %             E1=(E1E+E1F)/2;
 %         else
-            [E1]=totalsedimenterosionSANDsine(h,hlimC,kro,MannSsand,rho,rhos,ss,d50_1,ws1,fTide,computetidalcurrent,U,FcrUT,UTref,[],US,hS,nSHALLOW,computeRiver,UR,fMFriver);
-        %end
+            %[E1]=totalsedimenterosionSANDsine(h,hlimC,kro,MannSsand,rho,rhos,ss,d50_1,ws1,fTide,computetidalcurrent,U,FcrUT,UTref,[],US,hS,nSHALLOW,computeRiver,UR,fMFriver);
+            [E1ebb]=totalsedimenterosionSANDsine(h,hlimC,kro,MannSsand,rho,rhos,ss,d50_1,ws1,fTide,computetidalcurrent,Uebb,FcrUT,UTref,[],US,hS,nSHALLOW,computeRiver,UR,fMFriver);
+            [E1fld]=totalsedimenterosionSANDsine(h,hlimC,kro,MannSsand,rho,rhos,ss,d50_1,ws1,fTide,computetidalcurrent,Ufld,FcrUT,UTref,[],US,hS,nSHALLOW,computeRiver,UR,fMFriver);
+             E1=max(E1ebb,E1fld);%E1=(E1ebb+E1fld)/2;
+            
+            
+            %end
         E1(A==2)=0; %needed for b.c.
         PLT.E1=E1;
         %E1=min(E1/rbulk1*dt,5)*(rbulk1/dt);
@@ -724,15 +752,20 @@ if (computetidalcurrent==1 | computeRiver==1)
             UwaveMUD=facHwave*Uwave.*(B==0 | Zlev<dBlo); %vegetation effect. Plants put to zero wave erosion
         else;QsWslope=zeros(N,M);QsWon=zeros(N,M);BRK=zeros(N,M);UwaveMUD=zeros(N,M);Hs=zeros(N,M);Tp_swellMUD=1;HswellMUD=0;end
         
-        [E2,~,B]=totalsedimenterosionMUDsine(ho,h,taucr,taucrVEG,VEG,me,kowave,MannSmud,fTide,U,FcrUT,FcrUTveg,hlimC,computetidalcurrent,US,hS,nSHALLOW,computeSeaWave,Uwave_seaI,Tp_seaI,computeSwellWave,UwaveMUD,Tp_swell,computeRiver,fMFriver,UR,flowdestroyVEG,B);
-        
+        %[E2,~,B]=totalsedimenterosionMUDsine(ho,h,taucr,taucrVEG,VEG,me,kowave,MannSmud,fTide,U,FcrUT,FcrUTveg,hlimC,computetidalcurrent,US,hS,nSHALLOW,computeSeaWave,Uwave_seaI,Tp_seaI,computeSwellWave,UwaveMUD,Tp_swell,computeRiver,fMFriver,UR,flowdestroyVEG,B);
+        [E2ebb,~,B]=totalsedimenterosionMUDsine(ho,h,taucr,taucrVEG,VEG,me,kowave,MannSmud,fTide,Uebb,FcrUT,FcrUTveg,hlimC,computetidalcurrent,US,hS,nSHALLOW,computeSeaWave,Uwave_seaI,Tp_seaI,computeSwellWave,UwaveMUD,Tp_swell,computeRiver,fMFriver,UR,flowdestroyVEG,B);
+        [E2fld,~,B]=totalsedimenterosionMUDsine(ho,h,taucr,taucrVEG,VEG,me,kowave,MannSmud,fTide,Ufld,FcrUT,FcrUTveg,hlimC,computetidalcurrent,US,hS,nSHALLOW,computeSeaWave,Uwave_seaI,Tp_seaI,computeSwellWave,UwaveMUD,Tp_swell,computeRiver,fMFriver,UR,flowdestroyVEG,B);
+        E2=max(E2ebb,E2fld);%E2=(E2ebb+E2fld)/2;%E1=(E1ebb+E1fld)/2;
+
         E2(A==2)=0; %needed for b.c.
         PLT.E2=E2;
         
         if computeclay==1
-        %(3)Total sediment resupension ORGANIC
-        %meclay=me/5;
-        [E3]=totalsedimenterosionMUDsine(ho,h,taucrclay,taucrclayVEG,VEG,meclay,kowave,MannSmud,fTide,U,FcrUT,FcrUTveg,hlimC,computetidalcurrent,US,hS,nSHALLOW,computeSeaWave,Uwave_seaI,Tp_seaI,computeSwellWave,UwaveMUD,Tp_swell,computeRiver,fMFriver,UR,flowdestroyVEG,B);
+        %[E3]=totalsedimenterosionMUDsine(ho,h,taucrclay,taucrclayVEG,VEG,meclay,kowave,MannSmud,fTide,U,FcrUT,FcrUTveg,hlimC,computetidalcurrent,US,hS,nSHALLOW,computeSeaWave,Uwave_seaI,Tp_seaI,computeSwellWave,UwaveMUD,Tp_swell,computeRiver,fMFriver,UR,flowdestroyVEG,B);
+        [E3ebb]=totalsedimenterosionMUDsine(ho,h,taucrclay,taucrclayVEG,VEG,meclay,kowave,MannSmud,fTide,Uebb,FcrUT,FcrUTveg,hlimC,computetidalcurrent,US,hS,nSHALLOW,computeSeaWave,Uwave_seaI,Tp_seaI,computeSwellWave,UwaveMUD,Tp_swell,computeRiver,fMFriver,UR,flowdestroyVEG,B);
+        [E3fld]=totalsedimenterosionMUDsine(ho,h,taucrclay,taucrclayVEG,VEG,meclay,kowave,MannSmud,fTide,Ufld,FcrUT,FcrUTveg,hlimC,computetidalcurrent,US,hS,nSHALLOW,computeSeaWave,Uwave_seaI,Tp_seaI,computeSwellWave,UwaveMUD,Tp_swell,computeRiver,fMFriver,UR,flowdestroyVEG,B);
+        E3=max(E3ebb,E3fld);%E3=(E3ebb+E3fld)/2;%E1=(E1ebb+E1fld)/2;
+        
         else
         E3=E2;
         end
@@ -749,26 +782,32 @@ if (computetidalcurrent==1 | computeRiver==1)
         fracY1(A>=10 | A<=19)=1;
         E1=E1.*fracY1;%Reduced for fraction of sediemnt due to coesion
         Elimit=max(0,Y1*conces)/dt*rbulk1;a=find(E1>Elimit & A==1);E1(a)=Elimit(a);%this is the limit to avoid E to scour more than Y1 or Y2.
+    
+        E1ebb=E1ebb.*fracY1;
+        Elimit=max(0,Y1*conces)/dt*rbulk1;a=find(E1ebb>Elimit & A==1);E1ebb(a)=Elimit(a);%this is the limit to avoid E to scour more than Y1 or Y2.
+    
+        E1fld=E1fld.*fracY1;
+        Elimit=max(0,Y1*conces)/dt*rbulk1;a=find(E1fld>Elimit & A==1);E1fld(a)=Elimit(a);%this is the limit to avoid E to scour more than Y1 or Y2.
+      
     end
     if computemud==1;
         E2o=E2;
-        % conces=1;%how much to extra erode, a parameter
-        %E2=E2.*fracY2;
         Elimit=max(0,Y2*conces)/dt*rbulk2;a=find(E2>Elimit);E2(a)=Elimit(a);
-        %E2(Y2<0.2 & VEG==1)=0;
-        %E3=E3.*fracY3;
-        %Elimit=max(0,Y3*conces)/dt*rbulk2;a=find(E3>Elimit);E3(a)=Elimit(a);
+
+        Elimit=max(0,Y2*conces)/dt*rbulk2;a=find(E2ebb>Elimit);E2ebb(a)=Elimit(a);
+        Elimit=max(0,Y2*conces)/dt*rbulk2;a=find(E2fld>Elimit);E2fld(a)=Elimit(a);
+
     end
         if computeclay==1;
         E3o=E3;
-        % conces=1;%how much to extra erode, a parameter
-        %E2=E2.*fracY2;
         Elimit=max(0,Y3*conces)/dt*rbulk3;a=find(E3>Elimit);E3(a)=Elimit(a);
-        %E2(Y2<0.2 & VEG==1)=0;
-        %E3=E3.*fracY3;
-        %Elimit=max(0,Y3*conces)/dt*rbulk2;a=find(E3>Elimit);E3(a)=Elimit(a);
+
+        Elimit=max(0,Y3*conces)/dt*rbulk3;a=find(E3ebb>Elimit);E3ebb(a)=Elimit(a);
+        Elimit=max(0,Y3*conces)/dt*rbulk3;a=find(E3fld>Elimit);E3fld(a)=Elimit(a);
+
     end
-    
+    %Note the the 1/dt*2 is really dt*2. becuase it ebb and fld occur only
+    %hafl the tidal period (see sedtran)
     
     
     
@@ -820,15 +859,18 @@ Ttot=sqrt(TUnx.^2+TUny.^2);
         %WS=WS.*(1+  1-exp(max-(h,1)));
       
     
+        DoSAND=A*0+DoSAND;
+        
+        
         %TO Accrete the boundary
         if accumulateonedges==1
         Amsk=(A~=0);
         Amin=min(Amsk,[Amsk(1,:)*0; Amsk(1:end-1,:)]);Amin=min(Amin,[Amsk(2:end,:); Amsk(end,:)*0 ]);Amin=min(Amin,[Amsk(:,1)*0 Amsk(:,1:end-1)]);Amin=min(Amin,[Amsk(:,2:end) Amsk(:,end)*0 ]);
         WS(Amin==0 & A==1)=ws1*100;
         %E1(Amin==0 & A==1)=0; 
-        DoSAND=A*0+DoSAND;
         DoSAND(Amin==0 & A==1)=1.*h(Amin==0 & A==1).*(h(Amin==0 & A==1)>0.1);
-        %bnd=Amin==0 & A==1;
+        
+         %bnd=Amin==0 & A==1;
         
         %Amsk=(Amin==0 & A==1);
         %Amax=max(Amsk,[Amsk(1,:)*0; Amsk(1:end-1,:)]);Amax=max(Amax,[Amsk(2:end,:); Amsk(end,:)*0 ]);Amax=max(Amax,[Amsk(:,1)*0 Amsk(:,1:end-1)]);Amax=max(Amax,[Amsk(:,2:end) Amsk(:,end)*0 ]);     
@@ -836,21 +878,18 @@ Ttot=sqrt(TUnx.^2+TUny.^2);
         %figure;imagesc(DoSAND);pause
         end
 
-
-        %fpeksand=pi/2./max(0.1,U)*0.5;%pi/2;%.*(1./max(h,1)).^0.5;
-        %fpeksand=1./max(0.1,U).*(1./max(h,1))*5;%pi/2;%.*(1./max(h,1)).^0.5;
-        %fpeksand=max(0.1,U).*(1./max(h,0.1))*50;%pi/2;%.*(1./max(h,1)).^0.5;
-        %fpeksand=1;%$pi/2;%pi/2;%max(0.1,U).*(1./max(h,0.1))*50;%pi/2;%.*(1./max(h,1)).^0.5;
+        DoSAND(A==2 | A>=10)=NaN;%Oct 2025 to allow adevctive flux out dring ebb
         
-        fpeksand=pi/2;%max(0.1,U).^2;%50./max(1,h);%pi/2;%.*(1./max(h,1)).^0.5;
-        %fpeksand=2;%./max(1,h)*2;%pi/2;%.*(1./max(h,1)).^0.5;
+        
+        fpeksand=2;
         if computetidalcurrent==1
             if computeRiver==1     
-                [EmD1ebb,SSMebb,FLX1,XXTide,XXRiver]=sedtran([],h,A,SPCLcell,DoSAND,DiffSsand,Zlev,h,ho,E1,WS,dx,dt/2,rbulk1,co1,SeaSSCbelowLIMIT,ZlevcoLIMIT,Ux,Uy,fTide,Ttide,qT1.*fpeksand+qR1,qTm1.*fpeksand+qRm1,qTN.*fpeksand+qRN,qTmN.*fpeksand+qRmN,-TUnx*facTsand,-TUny*facTsand,periodic,1,computetidalcurrent,residualcurrents,kro,co1mouth,FLX1,tracksedimentfluxes,XX);                          
-                [EmD1flo,SSMflo,FLX1,XXTide,XXRiver]=sedtran([],h,A,SPCLcell,DoSAND,DiffSsand,Zlev,h,ho,E1,WS,dx,dt/2,rbulk1,co1,SeaSSCbelowLIMIT,ZlevcoLIMIT,Ux,Uy,fTide,Ttide,-qT1.*fpeksand+qR1,-qTm1.*fpeksand+qRm1,-qTN.*fpeksand+qRN,-qTmN.*fpeksand+qRmN,-TUnx*facTsand,-TUny*facTsand,periodic,1,computetidalcurrent,residualcurrents,kro,co1mouth,FLX1,tracksedimentfluxes,XX); 
+                [EmD1ebb,SSMebb,FLX1,XXTide,XXRiver]=sedtran([],h,A,SPCLcell,DoSAND,DiffSsand,Zlev,h,ho,E1ebb,WS,dx,dt/2,rbulk1,co1,SeaSSCbelowLIMIT,ZlevcoLIMIT,Ux,Uy,fTide,Ttide,qT1.*fpeksand+qR1,qTm1.*fpeksand+qRm1,qTN.*fpeksand+qRN,qTmN.*fpeksand+qRmN,-TUnx*facTsand,-TUny*facTsand,periodic,1,computetidalcurrent,residualcurrents,kro,co1mouth,FLX1,tracksedimentfluxes,XX);                          
+                [EmD1flo,SSMflo,FLX1,XXTide,XXRiver]=sedtran([],h,A,SPCLcell,DoSAND,DiffSsand,Zlev,h,ho,E1fld,WS,dx,dt/2,rbulk1,co1,SeaSSCbelowLIMIT,ZlevcoLIMIT,Ux,Uy,fTide,Ttide,-qT1.*fpeksand+qR1,-qTm1.*fpeksand+qRm1,-qTN.*fpeksand+qRN,-qTmN.*fpeksand+qRmN,-TUnx*facTsand,-TUny*facTsand,periodic,1,computetidalcurrent,residualcurrents,kro,co1mouth,FLX1,tracksedimentfluxes,XX); 
             elseif computeRiver==0                       
-                [EmD1ebb,SSMebb,FLX1,XXTide,XXRiver]=sedtran([],h,A,SPCLcell,DoSAND,DiffSsand,Zlev,h,ho,E1,WS,dx,dt/2,rbulk1,co1,SeaSSCbelowLIMIT,ZlevcoLIMIT,Ux,Uy,fTide,Ttide,qT1.*fpeksand,qTm1.*fpeksand,qTN.*fpeksand,qTmN.*fpeksand,-TUnx*facTsand,-TUny*facTsand,periodic,1,computetidalcurrent,residualcurrents,kro,co1mouth,FLX1,tracksedimentfluxes,XX);                          
-                [EmD1flo,SSMflo,FLX1,XXTide,XXRiver]=sedtran([],h,A,SPCLcell,DoSAND,DiffSsand,Zlev,h,ho,E1,WS,dx,dt/2,rbulk1,co1,SeaSSCbelowLIMIT,ZlevcoLIMIT,Ux,Uy,fTide,Ttide,-qT1.*fpeksand,-qTm1.*fpeksand,-qTN.*fpeksand,-qTmN.*fpeksand,-TUnx*facTsand,-TUny*facTsand,periodic,1,computetidalcurrent,residualcurrents,kro,co1mouth,FLX1,tracksedimentfluxes,XX);
+                [EmD1ebb,SSMebb,FLX1,XXTide,XXRiver]=sedtran([],h,A,SPCLcell,DoSAND,DiffSsand,Zlev,h,ho,E1ebb,WS,dx,dt/2,rbulk1,co1,SeaSSCbelowLIMIT,ZlevcoLIMIT,Ux,Uy,fTide,Ttide,qT1.*fpeksand,qTm1.*fpeksand,qTN.*fpeksand,qTmN.*fpeksand,-TUnx*facTsand,-TUny*facTsand,periodic,1,computetidalcurrent,residualcurrents,kro,co1mouth,FLX1,tracksedimentfluxes,XX);                          
+                [EmD1flo,SSMflo,FLX1,XXTide,XXRiver]=sedtran([],h,A,SPCLcell,DoSAND,DiffSsand,Zlev,h,ho,E1fld,WS,dx,dt/2,rbulk1,co1,SeaSSCbelowLIMIT,ZlevcoLIMIT,Ux,Uy,fTide,Ttide,-qT1.*fpeksand,-qTm1.*fpeksand,-qTN.*fpeksand,-qTmN.*fpeksand,-TUnx*facTsand,-TUny*facTsand,periodic,1,computetidalcurrent,residualcurrents,kro,co1mouth,FLX1,tracksedimentfluxes,XX);
+           norive=9
             end      
             EmD1=(EmD1ebb*0.5+EmD1flo*0.5);
             SSM1=(SSMebb*0.5+SSMflo*0.5);            
@@ -865,25 +904,27 @@ Ttot=sqrt(TUnx.^2+TUny.^2);
     
     
     
+    fpekmud=1;%pi/2;%1./max(0.1,U);%1;%pi/2;
+    
     if computemud==1;
         WS=A*0+ws2;
         WS(VEG==1)=wsB;
-        WS(S==1)=ws2;%SHOULD NOT BE NECEEARY BECUASE VEG alreeady set equal to zero where S=1 (see above).  ->Do not add the vegetation settling velocity in the ponds! %WS(S==1)=0.000000000001;%E2(S==1)=0;
+        WS(S==1)=ws2;%*10;%SHOULD NOT BE NECEEARY BECUASE VEG alreeady set equal to zero where S=1 (see above).  ->Do not add the vegetation settling velocity in the ponds! %WS(S==1)=0.000000000001;%E2(S==1)=0;
         ADoMUD=A*0+DoMUD;
         ADoMUD(VEG==1)=DoMUDveg;
         ADoMUD(VEG==1)=ADoMUD(VEG==1)+DoMUDsubgridVEG;
         
         ADoMUD(A==2)=NaN;%Oct 2025 to allow adevctive flux out dring ebb
           
-        fpekmud=1;%pi/2;%1./max(0.1,U);%1;%pi/2;
-        
+        %E2(S==1)=0;E2ebb(S==1)=0;E2fld(S==1)=0;
+
         if computetidalcurrent==1
             if computeRiver==1
-                [EmD2ebb,SSMebb,FLX2,XXTide,XXRiver]=sedtran([],h,A,SPCLcell,ADoMUD,DiffSmud,Zlev,h,ho,E2,WS,dx,dt/2,rbulk2,co2,0,NaN,Ux,Uy,fTide,Ttide,qT1.*fpekmud+qR1,qTm1.*fpekmud+qRm1,qTN.*fpekmud+qRN,qTmN.*fpekmud+qRmN,-TUnx*facTmud,-TUny*facTmud,periodic,1,computetidalcurrent,residualcurrents,kro,co2mouth,FLX2,tracksedimentfluxes,XX);
-                [EmD2flo,SSMflo,FLX2,XXTide,XXRiver]=sedtran([],h,A,SPCLcell,ADoMUD,DiffSmud,Zlev,h,ho,E2,WS,dx,dt/2,rbulk2,co2,0,NaN,Ux,Uy,fTide,Ttide,-qT1.*fpekmud+qR1,-qTm1.*fpekmud+qRm1,-qTN.*fpekmud+qRN,-qTmN.*fpekmud+qRmN,-TUnx*facTmud,-TUny*facTmud,periodic,1,computetidalcurrent,residualcurrents,kro,co2mouth,FLX2,tracksedimentfluxes,XX);
+                [EmD2ebb,SSMebb,FLX2,XXTide,XXRiver]=sedtran([],h,A,SPCLcell,ADoMUD,DiffSmud,Zlev,h,ho,E2ebb,WS,dx,dt/2,rbulk2,co2,0,NaN,Ux,Uy,fTide,Ttide,qT1.*fpekmud+qR1,qTm1.*fpekmud+qRm1,qTN.*fpekmud+qRN,qTmN.*fpekmud+qRmN,-TUnx*facTmud,-TUny*facTmud,periodic,1,computetidalcurrent,residualcurrents,kro,co2mouth,FLX2,tracksedimentfluxes,XX);
+                [EmD2flo,SSMflo,FLX2,XXTide,XXRiver]=sedtran([],h,A,SPCLcell,ADoMUD,DiffSmud,Zlev,h,ho,E2fld,WS,dx,dt/2,rbulk2,co2,0,NaN,Ux,Uy,fTide,Ttide,-qT1.*fpekmud+qR1,-qTm1.*fpekmud+qRm1,-qTN.*fpekmud+qRN,-qTmN.*fpekmud+qRmN,-TUnx*facTmud,-TUny*facTmud,periodic,1,computetidalcurrent,residualcurrents,kro,co2mouth,FLX2,tracksedimentfluxes,XX);
             elseif computeRiver==0                             
-                [EmD2ebb,SSMebb,FLX2,XXTide,XXRiver]=sedtran([],h,A,SPCLcell,ADoMUD,DiffSmud,Zlev,h,ho,E2,WS,dx,dt/2,rbulk2,co2,0,NaN,Ux,Uy,fTide,Ttide,qT1.*fpekmud,qTm1.*fpekmud,qTN.*fpekmud,qTmN.*fpekmud,-TUnx*facTmud,-TUny*facTmud,periodic,1,computetidalcurrent,residualcurrents,kro,co2mouth,FLX2,tracksedimentfluxes,XX);                           
-                [EmD2flo,SSMflo,FLX2,XXTide,XXRiver]=sedtran([],h,A,SPCLcell,ADoMUD,DiffSmud,Zlev,h,ho,E2,WS,dx,dt/2,rbulk2,co2,0,NaN,Ux,Uy,fTide,Ttide,-qT1.*fpekmud,-qTm1.*fpekmud,-qTN.*fpekmud,-qTmN.*fpekmud,-TUnx*facTmud,-TUny*facTmud,periodic,1,computetidalcurrent,residualcurrents,kro,co2mouth,FLX2,tracksedimentfluxes,XX);           
+                [EmD2ebb,SSMebb,FLX2,XXTide,XXRiver]=sedtran([],h,A,SPCLcell,ADoMUD,DiffSmud,Zlev,h,ho,E2ebb,WS,dx,dt/2,rbulk2,co2,0,NaN,Ux,Uy,fTide,Ttide,qT1.*fpekmud,qTm1.*fpekmud,qTN.*fpekmud,qTmN.*fpekmud,-TUnx*facTmud,-TUny*facTmud,periodic,1,computetidalcurrent,residualcurrents,kro,co2mouth,FLX2,tracksedimentfluxes,XX);                           
+                [EmD2flo,SSMflo,FLX2,XXTide,XXRiver]=sedtran([],h,A,SPCLcell,ADoMUD,DiffSmud,Zlev,h,ho,E2fld,WS,dx,dt/2,rbulk2,co2,0,NaN,Ux,Uy,fTide,Ttide,-qT1.*fpekmud,-qTm1.*fpekmud,-qTN.*fpekmud,-qTmN.*fpekmud,-TUnx*facTmud,-TUny*facTmud,periodic,1,computetidalcurrent,residualcurrents,kro,co2mouth,FLX2,tracksedimentfluxes,XX);           
             end
             EmD2=(EmD2ebb*0.5+EmD2flo*0.5);
             SSM=(SSMebb*0.5+SSMflo*0.5);
@@ -906,22 +947,22 @@ Ttot=sqrt(TUnx.^2+TUny.^2);
     if computeclay==1;
         WS=A*0+ws3;
         WS(VEG==1)=wsBclay;
-        WS(S==1)=ws3;%SHOULD NOT BE NECEEARY BECUASE VEG alreeady set equal to zero where S=1 (see above).  ->Do not add the vegetation settling velocity in the ponds! %WS(S==1)=0.000000000001;%E2(S==1)=0;
+        WS(S==1)=ws3;%*10;%SHOULD NOT BE NECEEARY BECUASE VEG alreeady set equal to zero where S=1 (see above).  ->Do not add the vegetation settling velocity in the ponds! %WS(S==1)=0.000000000001;%E2(S==1)=0;
         ADoMUD=A*0+DoMUD;
         ADoMUD(VEG==1)=DoMUDveg;
         ADoMUD(VEG==1)=ADoMUD(VEG==1)+DoMUDsubgridVEG;
         
         ADoMUD(A==2)=NaN;%Oct 2025
         
-        fpekmud=1;%pi/2;%1./max(0.1,U);%1;%pi/2;
-        
+        %E3(S==1)=0;E3ebb(S==1)=0;E3fld(S==1)=0;
+
         if computetidalcurrent==1
             if computeRiver==1
-                [EmD3ebb,SSMebb,FLX3,XXTide,XXRiver]=sedtran([],h,A,SPCLcell,ADoMUD,DiffSmud,Zlev,h,ho,E3,WS,dx,dt/2,rbulk3,co3,0,NaN,Ux,Uy,fTide,Ttide,qT1.*fpekmud+qR1,qTm1.*fpekmud+qRm1,qTN.*fpekmud+qRN,qTmN.*fpekmud+qRmN,-TUnx*facTmud,-TUny*facTmud,periodic,1,computetidalcurrent,residualcurrents,kro,co3mouth,FLX3,tracksedimentfluxes,XX);
-                [EmD3flo,SSMflo,FLX3,XXTide,XXRiver]=sedtran([],h,A,SPCLcell,ADoMUD,DiffSmud,Zlev,h,ho,E3,WS,dx,dt/2,rbulk3,co3,0,NaN,Ux,Uy,fTide,Ttide,-qT1.*fpekmud+qR1,-qTm1.*fpekmud+qRm1,-qTN.*fpekmud+qRN,-qTmN.*fpekmud+qRmN,-TUnx*facTmud,-TUny*facTmud,periodic,1,computetidalcurrent,residualcurrents,kro,co3mouth,FLX3,tracksedimentfluxes,XX);
+                [EmD3ebb,SSMebb,FLX3,XXTide,XXRiver]=sedtran([],h,A,SPCLcell,ADoMUD,DiffSmud,Zlev,h,ho,E3ebb,WS,dx,dt/2,rbulk3,co3,0,NaN,Ux,Uy,fTide,Ttide,qT1.*fpekmud+qR1,qTm1.*fpekmud+qRm1,qTN.*fpekmud+qRN,qTmN.*fpekmud+qRmN,-TUnx*facTmud,-TUny*facTmud,periodic,1,computetidalcurrent,residualcurrents,kro,co3mouth,FLX3,tracksedimentfluxes,XX);
+                [EmD3flo,SSMflo,FLX3,XXTide,XXRiver]=sedtran([],h,A,SPCLcell,ADoMUD,DiffSmud,Zlev,h,ho,E3fld,WS,dx,dt/2,rbulk3,co3,0,NaN,Ux,Uy,fTide,Ttide,-qT1.*fpekmud+qR1,-qTm1.*fpekmud+qRm1,-qTN.*fpekmud+qRN,-qTmN.*fpekmud+qRmN,-TUnx*facTmud,-TUny*facTmud,periodic,1,computetidalcurrent,residualcurrents,kro,co3mouth,FLX3,tracksedimentfluxes,XX);
             elseif computeRiver==0                             
-                [EmD3ebb,SSMebb,FLX3,XXTide,XXRiver]=sedtran([],h,A,SPCLcell,ADoMUD,DiffSmud,Zlev,h,ho,E3,WS,dx,dt/2,rbulk3,co3,0,NaN,Ux,Uy,fTide,Ttide,qT1.*fpekmud,qTm1.*fpekmud,qTN.*fpekmud,qTmN.*fpekmud,-TUnx*facTmud,-TUny*facTmud,periodic,1,computetidalcurrent,residualcurrents,kro,co3mouth,FLX3,tracksedimentfluxes,XX);                           
-                [EmD3flo,SSMflo,FLX3,XXTide,XXRiver]=sedtran([],h,A,SPCLcell,ADoMUD,DiffSmud,Zlev,h,ho,E3,WS,dx,dt/2,rbulk3,co3,0,NaN,Ux,Uy,fTide,Ttide,-qT1.*fpekmud,-qTm1.*fpekmud,-qTN.*fpekmud,-qTmN.*fpekmud,-TUnx*facTmud,-TUny*facTmud,periodic,1,computetidalcurrent,residualcurrents,kro,co3mouth,FLX3,tracksedimentfluxes,XX);           
+                [EmD3ebb,SSMebb,FLX3,XXTide,XXRiver]=sedtran([],h,A,SPCLcell,ADoMUD,DiffSmud,Zlev,h,ho,E3ebb,WS,dx,dt/2,rbulk3,co3,0,NaN,Ux,Uy,fTide,Ttide,qT1.*fpekmud,qTm1.*fpekmud,qTN.*fpekmud,qTmN.*fpekmud,-TUnx*facTmud,-TUny*facTmud,periodic,1,computetidalcurrent,residualcurrents,kro,co3mouth,FLX3,tracksedimentfluxes,XX);                           
+                [EmD3flo,SSMflo,FLX3,XXTide,XXRiver]=sedtran([],h,A,SPCLcell,ADoMUD,DiffSmud,Zlev,h,ho,E3fld,WS,dx,dt/2,rbulk3,co3,0,NaN,Ux,Uy,fTide,Ttide,-qT1.*fpekmud,-qTm1.*fpekmud,-qTN.*fpekmud,-qTmN.*fpekmud,-TUnx*facTmud,-TUny*facTmud,periodic,1,computetidalcurrent,residualcurrents,kro,co3mouth,FLX3,tracksedimentfluxes,XX);           
             end
             EmD3=(EmD3ebb*0.5+EmD3flo*0.5);
             SSM=(SSMebb*0.5+SSMflo*0.5);
@@ -931,6 +972,11 @@ Ttot=sqrt(TUnx.^2+TUny.^2);
           
         PLT.XXTide3=XXTide;PLT.XXRiver3=XXRiver;
         if (computeRiver==1 & imposeNOerosiondepostionatmouthMUD==1);EmD3(A>=10 & A<=19)=0;end
+        
+          SSC3ebb=SSMebb./h;%./fTide;  %devi metter i fTide per farti plottare la b.c quando il fondo e' sopra il MLW (ftide<1)
+          SSC3flo=SSMflo./h;%./fTide;  %devi metter i fTide per farti plottare la b.c quando il fondo e' sopra il MLW (ftide<1)
+          PLT.SSC3ebb=SSC3ebb;
+          PLT.SSC3flo=SSC3flo;
     else;EmD3=0*A;SSM=0*A;end
     SSC3=SSM./h;%./fTide;  %devi metter i fTide per farti plottare la b.c quando il fondo e' sopra il MLW (ftide<1)
 
@@ -1114,71 +1160,32 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%BED EVOLUTION DIVERGENCE%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %EVOLUTION OF Y1
+facrduedwn=0.2;
+%%%deleteUef=max(U,max(Uebb,Ufld));
 if computesand==1;
-    
-    % FcrUR=0.5;
-    % UR=min(UR,FcrUR*sqrt(9.81*h));
-    % UR=min(UR,4);
+    z=znew;  %NEED TO RE-UDPATED IT
     
     Yreduction=(1-min(1,exp(-10*(Y1)))).*fracY1;    %ONLY FOR THE WAVE TRANSPORT, DIOCANE
-    %Qs1=E1o./(ws1*3600*24).*(U*alphaSAND+UR*alphaSANDriver).*max(hlimCdwnSAND,h);%.*(h>0.5); %kg/m/s% USED FOR BARNSTABLE-ORIGINAL RIVER SIMS
-    %Qs1=E1o./(ws1*3600*24).*(U*alphaSAND+UR*alphaSANDriver).*max(hlimCdwnSAND,h);%IKEDA
-    %Qs1=E1o./(ws1*3600*24).*(alphaSANDriver).*(U*pi/2+UR).*h; %kg/m/s% USED FOR BARNSTABLE
-    %Qs1=E1o./(ws1*3600*24).*(alphaSANDriver).*(U*5./fTide+UR).*h;%max(h,1); %kg/m/s% USED FOR BARNSTABLE
-    
-    
-    %Qs1=E1o./(Wws1*3600*24).*(alphaSANDriver).*(U.*fpeksand./fTide+UR*2).*h;%max(h,1); %kg/m/s% USED FOR BARNSTABLE
-    %Qs1=E1o./(Wws1*3600*24).*(alphaSANDriver).*(U.*fpeksand +UR*2 +Ttot.*h.^2*facTsand).*h;%max(h,1); %kg/m/s% USED FOR BARNSTABLE
-    
-    %Qs1=E1o./(Wws1*3600*24).*(alphaSANDriver).*(U +UR*2 +Ttot.*h.^2*facTsand).*h;%max(h,1); %kg/m/s% USED FOR BARNSTABLE
-    %Qs1=E1o./(Wws1*3600*24).*(alphaSANDriver).*(U.*fpeksand +UR*2).*h;%max(h,1); %kg/m/s% USED FOR BARNSTABLE
-    %Qs1=E1o./(Wws1*3600*24).*(alphaSANDriver).*(U.*fpeksand*0.5 +20*Ttot.*h*facTsand +UR*2).*h;%max(h,1); %kg/m/s% USED FOR BARNSTABLE
-    %Qs1=E1o./(Wws1*3600*24).*(alphaSANDriver).*(U +Ttot.*h*facTsand +UR).*h;%max(h,1); %kg/m/s% USED FOR BARNSTABLE
-    Qs1=E1o./(ws1*3600*24).*(alphaSANDriver).*(U*fpeksand +UR).*h;%max(h,1); %kg/m/s% USED FOR BARNSTABLE
-    %Qs1(bnd)=10;
-    %figure;imagesc(Qs1);pause
-    
-    %Qs1=E1o./(Wws1*3600*24).*(alphaSANDriver).*(U.*1 +UR*2 +Ttot.*h.^2*facTsand).*h;%max(h,1); %kg/m/s% USED FOR BARNSTABLE
-    
-%     figure
-%     imagesc(U.*fpeksand)
-%     figure
-%     imagesc(Ttot.*h.^2*facTsand)
-%     pause
-    
-    
-    
-    %Qs1=E1o./(ws1*3600*24).*(U*alphaSAND+1*alphaSANDriver).*1; %kg/m/s% USED FOR BARNSTABLE
-    %Qs1=E1o./(ws1*3600*24).*alphaSANDriver.*sqrt( ((qR1+qRm1)/2).^2  +((qRN+qRmN)/2).^2);%(U*alphaSAND+UR*alphaSANDriver).*max(hlimCdwnSAND,h); %kg/m/s% USED FOR BARNSTABLE
-    %Qs1y=E1o./(ws1*3600*24).*alphaSANDriver.*abs(qR1+qRm1)/2;%   (U*alphaSAND+UR*alphaSANDriver).*max(hlimCdwnSAND,h); %kg/m/s% USED FOR BARNSTABLE
-    %Qs1x=E1o./(ws1*3600*24).*alphaSANDriver.*abs(qRN+qRmN)/2;%.*(U*alphaSAND+UR*alphaSANDriver).*max(hlimCdwnSAND,h); %kg/m/s% USED FOR BARNSTABLE
-    %Qs1=E1o./(ws1*3600*24).*(U*alphaSAND+1*alphaSANDriver).*1; %TEST
-    %Qs1=E1o./(ws1*3600*24).*(U*alphaSAND+UR*alphaSANDriver).*h.*(h>0.5);%max(hlimCdwnSAND,h); %kg/m/s% USED FOR BARNSTABLE
-    %Qs1=0.01*UR.*h;%E1o./(ws1*3600*24).*(U*alphaSAND+UR*alphaSANDriver).*max(hlimCdwnSAND,h); %kg/m/s%
-    
-    %Qs1=E1o./(ws1*3600*24).*(U*alphaSAND+UR*alphaSANDriver).*h.*(h>0.5); %kg/m/s
-    %Qs1=E1o./(ws1*3600*24).*((Vebb+Vflood)/2*alphaSAND+UR*alphaSANDriver).*max(hlimCdwn,h); %kg/m/s
-    %wlo is the water level in which the dpeht h can actually go to zer (h is the water level in which the depth is at minimum kro, do avoid explidign with flow and disperive transport. wlo is used in wave transpor wlo=wlo+hwaverunup;%add extra water level due to wave run up. Already added where you calculate the swell waves around line 189
+    Qs1=E1o./(ws1*3600*24).*(alphaSANDriver).*(U*fpeksand +UR).*h  ;%max(h,1); %kg/m/s% USED FOR BARNSTABLE
+    if reduceDWNbed==1;Qs1=Qs1.*(facrduedwn+(1-facrduedwn)*(plyr>0));end
+
     if computeSwellWave==1 | computeSeaWave==1;computewave=1;else;computewave=0;end;
-    [znew,FQsW_L,FQsW_R,longshore,angleshore]=bedevolutionDIVlongshore(deltaPW,U,fTide,A,AW,z,Zlev,wlo,ho,Y1,Yreduction,VEG,N,M,dt,dx,Trange,crSAND,hDlo,hDhi,pDo,pDm,Qs1,reduceSANDbankVEG,rbulk1,hwSwelltransport_lim,computewave,QsWslope+QsWslope_sea*downslopeSANDseawaves,QsWon,angleSWELL,waveANGLE,Active,periodic,wavetransportzerolateralgradient,gridDIR,FQsW_L,FQsW_R);
+    [znew,FQsW_L,FQsW_R,longshore,angleshore]=bedevolutionDIVlongshore(deltaPW,U,fTide,A,AW,z,Zlev,wlo,ho,Y1,Yreduction,VEG,N,M,dt,dx,Trange,crSAND,hlimbankro,hlimbankr,drybankbeta,Qs1,reduceSANDbankVEG,rbulk1,hwSwelltransport_lim,computewave,QsWslope+QsWslope_sea*downslopeSANDseawaves,QsWon,angleSWELL,waveANGLE,Active,periodic,wavetransportzerolateralgradient,gridDIR,FQsW_L,FQsW_R);
     deltaY1=z-znew;Y1=Y1-deltaY1;
 else;longshore=0;angleshore=0;end
 
 %EVOLUTION OF Y2
 if computemud==1;
     z=znew;  %NEED TO RE-UDPATED IT
-    Yreduction=(1-min(1,exp(-10*(Y2)))).*fracY2;    %fracY2; %this is just for the marsh stratigraphy%FORSE PRIMA ERA PER UNA NO PER 10    %Yreduction=fracY2;  %this is for most of the simulations big basin % Yreduction(Yreduction<0.5)=0;
+
+    Yreduction=(1-min(1,exp(-10*(Y2)))).*fracY2;    %fracY2; %this is just for the marsh stratigraphy%FORSE PRIMA ERA PER UNA NO PER 10    %Yreduction=fracY2;  %this is for most of the simulations big basin % Yreduction(Yreduction<0.5)=0;   
     
-    %Yreduction=(1-min(1,exp(-1*(Y2))));Yreduction(Y2>0.3)=1;
-    %Yreduction=Yreduction.*fracY2;    %fracY2; %this is just for the marsh stratigraphy%FORSE PRIMA ERA PER UNA NO PER 10    %Yreduction=fracY2;  %this is for most of the simulations big basin % Yreduction(Yreduction<0.5)=0;
-    
-    %Yreduction=(Y2>0.3).*fracY2;
     Qs2=E2o./(ws2*3600*24).*(U*fpekmud+UR).*max(hlimCdwnMUD,h); %kg/m/s
+    UTOT=U+UR;
     
-    %facQsbank=A*0+facQsbank;    facQsbank(Zlev>0.4)=facQsbank(Zlev>0.4)*0.1;%trees
-    
-    znew=bedcreepponds(z,A,Active,Yreduction,crMUD,crMARSH,crbank,dx,dt,VEG,S,Qs2,rbulk2,alphaMUD,facQsbank,U+UR);%,deltaUC,a_bankcreep);  %MUD CREEP  MARSH
-    %znew=bedcreepponds(z,A,Active,Yreduction,crMUD,crMARSH,crbank,dx,dt,VEG,S,Qs2,rbulk2,alphaMUD,facQsbank,Ubase+UR);%,deltaUC,a_bankcreep);  %MUD CREEP  MARSH
+    if reduceDWNbed==1;Qs2=Qs2.*(facrduedwn+(1-facrduedwn)*(plyr>0));UTOT=UTOT.*(facrduedwn+(1-facrduedwn)*(plyr>0));end
+       
+    znew=bedcreepponds(z,A,Active,Yreduction,crMUD,crMARSH,crbank,dx,dt,VEG,S,Qs2,rbulk2,alphaMUD,facQsbank,UTOT);%,deltaUC,a_bankcreep);  %MUD CREEP  MARSH
     deltaY2=z-znew;
     deltaY2(A==2)=0;  %DO NOT UPDATE THE BOUNDARY
     Y2=Y2-deltaY2;
@@ -1187,32 +1194,21 @@ end
 %EVOLUTION OF Y3
 if computeclay==1;
     z=znew;  %NEED TO RE-UDPATED IT
-    Yreduction=(1-min(1,exp(-10*(Y3)))).*fracY3;    %fracY2; %this is just for the marsh stratigraphy%FORSE PRIMA ERA PER UNA NO PER 10    %Yreduction=fracY2;  %this is for most of the simulations big basin % Yreduction(Yreduction<0.5)=0;
     
-    %Yreduction=(1-min(1,exp(-1*(Y3))));Yreduction(Y3>0.3)=1;
-    %Yreduction=Yreduction.*fracY3;    %fracY2; %this is just for the marsh stratigraphy%FORSE PRIMA ERA PER UNA NO PER 10    %Yreduction=fracY2;  %this is for most of the simulations big basin % Yreduction(Yreduction<0.5)=0;
+    Yreduction=(1-min(1,exp(-10*(Y3)))).*fracY3;    %fracY2; %this is just for the marsh stratigraphy%FORSE PRIMA ERA PER UNA NO PER 10    %Yreduction=fracY2;  %this is for most of the simulations big basin % Yreduction(Yreduction<0.5)=0;    
     
-    %Yreduction=(Y3>0.3).*fracY3;
     Qs3=E3o./(ws3*3600*24).*(U*fpekmud+UR).*max(hlimCdwnMUD,h); %kg/m/s
+    UTOT=U+UR;
     
-    %facQsbank=A*0+facQsbank;    facQsbank(Zlev>0.4)=facQsbank(Zlev>0.4)*0.1;%trees
+    if reduceDWNbed==1;Qs3=Qs3.*(facrduedwn+(1-facrduedwn)*(plyr>0));UTOT=UTOT.*(facrduedwn+(1-facrduedwn)*(plyr>0));end
     
-    znew=bedcreepponds(z,A,Active,Yreduction,crMUD,crMARSH,crbank,dx,dt,VEG,S,Qs3,rbulk3,alphaMUDclay,facQsbank,U+UR);%,deltaUC,a_bankcreep);  %MUD CREEP  MARSH
-    %znew=bedcreepponds(z,A,Active,Yreduction,crMUD,crMARSH,crbank,dx,dt,VEG,S,Qs2,rbulk2,alphaMUD,facQsbank,Ubase+UR);%,deltaUC,a_bankcreep);  %MUD CREEP  MARSH
+    znew=bedcreepponds(z,A,Active,Yreduction,crMUD,crMARSH,crbank,dx,dt,VEG,S,Qs3,rbulk3,alphaMUDclay,facQsbank,UTOT);%,deltaUC,a_bankcreep);  %MUD CREEP  MARSH
     deltaY3=z-znew;
     deltaY3(A==2)=0;  %DO NOT UPDATE THE BOUNDARY
     Y3=Y3-deltaY3;
 end
 [min(Y2(:)) min(Y3(:))]
-% %EVOLUTION OF Y3
-% if computemud==1;
-%     if VEGstratigraphy==1;
-%         z=znew;  %NEED TO RE-UDPATED FROM THE Y1
-%         Yreduction=fracY3;%fracY3; (1-min(1,exp(-1*(Y3)))).*%Yreduction(Yreduction<0.1)=0;%to reduce some starneg probelms with creep of two sediment swiht stratigraphy. negative creep!
-%         znew=bedcreepponds(z,A,Active,Yreduction,crMUD,crMARSH,crbank,dx,dt,VEG,S);  %MUD CREEP
-%         deltaY3=z-znew;Y3=Y3-deltaY3;
-%     end
-% end
+
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

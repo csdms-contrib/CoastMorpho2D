@@ -5,11 +5,12 @@ function  [E,Eflow,B]=totalsedimenterosionMUDsine(ho,h,taucr,taucrVEG,VEG,me,kow
 taucro=U*0+taucr;
 taucro(VEG==1)=taucrVEG;
 
+%MannS=MannS*0+0.02;
 %MannS=MannS*0+0.015;
 %Fcr=h*0;
 %Fcr(VEG==0)=0.3;%FcrUT;
 %Fcr(VEG==1)=0.3;%FcrUTveg;
-
+%figure;imagesc(MannS);pause
 
 Eflow=0;
 
@@ -54,7 +55,6 @@ end
 
 
 Eflow=Eflow.*fTide;
-%Eflow=Eflow.*max(0.1,fTide);%
 
 
 
@@ -73,8 +73,6 @@ else
 Eswellwave=0;
 end
 
-
-%figure;imagesc(tauWswell);pause
 
 %Sea wave 
 if computeSeaWaves==1

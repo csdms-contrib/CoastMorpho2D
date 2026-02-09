@@ -47,7 +47,8 @@ ZZ=min(ZZ,min([ZZ(:,1)*0 ZZ(:,1:end-1)],min([ZZ(1,:)*0; ZZ(1:end-1,:)],min([ZZ(:
       DIF = ZZ-Z;%the depth of pond filling.   oNLY USED TO DEFINE WHAT IS AN impounded area!!!
       DIF(DIF>0.001)=ZZ(DIF>0.001)-Zold(DIF>0.001);     %tHIS IS THE ACTUAL water depth in the pond
       %S=DIF>minponddepth;%what constitutes a pond %orignal AWR
-      S=(DIF>minponddepth & Active==1);%what constitutes a pond
+      %S=(DIF>minponddepth & Active==1);%what constitutes a pond 2025      %standrd method
+      S=(DIF>minponddepth & Active==1 & Zold>Zntw);%what constitutes a pond JAN2026
       
 
 %AC=(Zold<Zntw & DIF<=minponddepth);%%IF<10^-8 %orignal AWR

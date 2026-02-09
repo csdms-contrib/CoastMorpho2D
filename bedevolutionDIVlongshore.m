@@ -1,4 +1,4 @@
-function [z,FQsW_L,FQsW_R,longshore,angleshore]=bedevolutionDIV(deltaPW,U,fTide,A,AW,z,Zlev,wl,ho,Y,Yreduction,VEG,N,M,dt,dx,Trange,crSAND,hDlo,hDhi,pDo,pDm,Qs,reduceSANDbankVEG,rbulk,hwSwelltransport_lim,computewave,QsWslope,QsWon,angleswell,waveANGLE,Active,periodic,wavetransportzerolateralgradient,gridDIR,FQsW_L,FQsW_R);
+function [z,FQsW_L,FQsW_R,longshore,angleshore]=bedevolutionDIV(deltaPW,U,fTide,A,AW,z,Zlev,wl,ho,Y,Yreduction,VEG,N,M,dt,dx,Trange,crSAND,hlimbankro,hlimbankr,drybankbeta,Qs,reduceSANDbankVEG,rbulk,hwSwelltransport_lim,computewave,QsWslope,QsWon,angleswell,waveANGLE,Active,periodic,wavetransportzerolateralgradient,gridDIR,FQsW_L,FQsW_R);
 %NOTES
 %remember in the min(h(p,0.1). These are "explicit term. You need to use
 %the old values when re-evaluatign the fluxes
@@ -105,20 +105,49 @@ for k = [N -N 1 -1]  % is left to right along the profile. If you take off N-N -
 % %     
 
 %New 8 19 2024
-   ap=min(1,max(0,(h(p(a))-hDlo)/hDhi));ap=ap*(pDm-pDo)+pDo;
-   aq=min(1,max(0,(h(q(a))-hDlo)/hDhi));aq=aq*(pDm-pDo)+pDo;
-   valueC=(  (z(p(a))>z(q(a))).*(D(p(a)).*(1-ap) +D(q(a)).*ap)...
-            +(z(q(a))>z(p(a))).*(D(q(a)).*(1-aq) +D(p(a)).*aq)   )...
-   .*max( (z(p(a))>z(q(a))).*Yreduction(p(a)) ,(z(q(a))>z(p(a))).*Yreduction(q(a)) );% .*max(h(p(a)),h(q(a)))./((h(p(a))+h(q(a)))/2) ;    %  (Y(p(a))>-0.5 & Y(q(a))>-0.5);   %valueC=(D(p(a))+D(q(a)))/2.*(Yreduction(p(a))+Yreduction(q(a)))/2;
+%1)
+%    ap=min(1,max(0,(h(p(a))-hDlo)/hDhi));ap=ap*(pDm-pDo)+pDo;
+%    aq=min(1,max(0,(h(q(a))-hDlo)/hDhi));aq=aq*(pDm-pDo)+pDo;
+%    valueC=(  (z(p(a))>z(q(a))).*(D(p(a)).*(1-ap) +D(q(a)).*ap)...
+%            +(z(q(a))>z(p(a))).*(D(q(a)).*(1-aq) +D(p(a)).*aq)   )...
+%   .*max( (z(p(a))>z(q(a))).*Yreduction(p(a)) ,(z(q(a))>z(p(a))).*Yreduction(q(a)) );% .*max(h(p(a)),h(q(a)))./((h(p(a))+h(q(a)))/2) ;    %  (Y(p(a))>-0.5 & Y(q(a))>-0.5);   %valueC=(D(p(a))+D(q(a)))/2.*(Yreduction(p(a))+Yreduction(q(a)))/2;
+%    
+% valueC=valueC.*(h(p(a))>0.1 & h(q(a))>0.1);
+
+%2)
+%valueC=max(D(p(a)),D(q(a)))...
+%   .*max( (z(p(a))>z(q(a))).*Yreduction(p(a)) ,(z(q(a))>z(p(a))).*Yreduction(q(a)) );% .*max(h(p(a)),h(q(a)))./((h(p(a))+h(q(a)))/2) ;    %  (Y(p(a))>-0.5 & Y(q(a))>-0.5);   %valueC=(D(p(a))+D(q(a)))/2.*(Yreduction(p(a))+Yreduction(q(a)))/2;
    
+
+%3)
+%hlimbankro=0.01;%.1;%limited for dry bank erosion
+%hlimbankr=0.5;%.1;%limited for dry bank erosion
+%redu=1;% how much to reduce downslope when upslope cell is "dry", so swith mechanism of erosion.
+
+%P.hlimbankro=0.01;%.1;%limited for dry bank erosion
+%P.hlimbankr=0.5;%0.2;%.1;%limited for dry bank erosion
+%P.drybankbeta=0.5;% how much to reduce downslope when upslope cell is "dry", so swith mechanism of erosion.%valueC=max( D(p(a)).*(1-redu*(h(q(a))<hlimbankr)) , D(q(a)).*(1-redu*(h(p(a))<hlimbankr)) )...
+
+aq=(hlimbankr-h(q(a)))/(hlimbankr-hlimbankro);aq(h(q(a))>hlimbankr)=0;aq(h(q(a))<hlimbankro)=1;
+ap=(hlimbankr-h(p(a)))/(hlimbankr-hlimbankro);ap(h(p(a))>hlimbankr)=0;ap(h(p(a))<hlimbankro)=1;
+valueC=max( D(p(a)).*(1-(1-drybankbeta)*aq), D(q(a)).*(1-(1-drybankbeta)*ap))...
+   .*max( (z(p(a))>z(q(a))).*Yreduction(p(a)) ,(z(q(a))>z(p(a))).*Yreduction(q(a)) );% .*max(h(p(a)),h(q(a)))./((h(p(a))+h(q(a)))/2) ;    %  (Y(p(a))>-0.5 & Y(q(a))>-0.5);   %valueC=(D(p(a))+D(q(a)))/2.*(Yreduction(p(a))+Yreduction(q(a)))/2;
+
+
 
    %BESTA USED THE MOST
    %valueC=(D(p(a))+D(q(a)))/2.*max( (z(p(a))>z(q(a))).*Yreduction(p(a)) ,(z(q(a))>z(p(a))).*Yreduction(q(a)) );%   .*max( (z(p(a))>z(q(a))).*(Y(p(a))>0) ,(z(q(a))>z(p(a))).*(Y(q(a))>0));%  l        (Y(p(a))>-0.5 & Y(q(a))>-0.5);   %valueC=(D(p(a))+D(q(a)))/2.*(Yreduction(p(a))+Yreduction(q(a)))/2;
 
+   
+   
+   
+   
    %erosion reduction at the vegeated bank
    valueC( (VEG(p(a))==1 & VEG(q(a))==0) | (VEG(p(a))==0 & VEG(q(a))==1) )= ...
    reduceSANDbankVEG*valueC( (VEG(p(a))==1 & VEG(q(a))==0) | (VEG(p(a))==0 & VEG(q(a))==1) );
-
+%else
+%    valueC=0*z(p(a));   
+%end
 
 % 
 % %reduce downslope if dry cells

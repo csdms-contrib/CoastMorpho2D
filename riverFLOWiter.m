@@ -1,8 +1,9 @@
-function [U,Ux,Uy,P,q1,qm1,qN,qmN,Utr]=flowBasin(A,manning,h,ho,dx,fTide,Q,Uo,directionQ,imposenocrossflux,FcrUR,DD1,DDN,DDUlimit,ahBNK);
+function [U,Ux,Uy,P,q1,qm1,qN,qmN,Utr]=flowBasin(A,manning,h,ho,dx,fTide,Q,Uo,directionQ,imposenocrossflux,FcrUR,DD1,DDN,DDUlimit,ahBNK,simulteflowDelft3d);
 %facADVh=0.5;
 %A(h<0.2)=0;
 %h=max(0.1,h);
 %Uo=A*0+1;
+%simulteflowDelft3d=0;
 
 %h=max(h,0.1);
 
@@ -56,7 +57,10 @@ FahBNK=ahBNK;%exp(-dx*ahBNK);%0.2;  %this is large (0.8) for small dx. HOW MUCH 
 % hFLOWmin=0.1;
 % hF=max(hF,hFLOWmin);
 
-
+%Simulate delft3d that does not calculate flow where h<0.1
+if simulteflowDelft3d==1;
+manning(h<0.1)=1;%ro precent flow in dry cells
+end
 
 Icsi=hF.*max(0.1,hF).^(1/3)  ./(manning.^2.*Uo);
 %Icsi=hF.*hF.^(1/3)  ./(manning.^2.*Uo);
@@ -93,8 +97,8 @@ Icsim=min(Icsi(p(a)),Icsi(q(a)));
 
 
 %hm=(h(p(a))+h(q(a)))/2;
-%hm=min(h(p(a)),h(q(a)));
-hm=0.5*(min(h(p(a)),h(q(a)))  + (h(p(a))+h(q(a)))/2 );
+hm=min(h(p(a)),h(q(a)));
+%hm=0.5*(min(h(p(a)),h(q(a)))  + (h(p(a))+h(q(a)))/2 );
 
 DD=Icsim.*hm /(dx^2);
 
@@ -150,8 +154,8 @@ Icsim=min(Icsi(p(a)),Icsi(q(a)));
 %Icsim=max(Icsi(p(a)),Icsi(q(a)));
 
 %hm=(h(p(a))+h(q(a)))/2;
-%hm=min(h(p(a)),h(q(a)));
-hm=0.5*(min(h(p(a)),h(q(a)))  + (h(p(a))+h(q(a)))/2 );
+hm=min(h(p(a)),h(q(a)));
+%hm=0.5*(min(h(p(a)),h(q(a)))  + (h(p(a))+h(q(a)))/2 );
 
 DD=Icsim.*hm /(dx^2) *dx;
 
@@ -234,6 +238,64 @@ Uy=max(abs(UN),abs(UmN));
 % Ux=(Ux + sign(Ux).*max(abs(U1),abs(Um1)))/2;
 % Uy=(Uy + sign(Uy).*max(abs(UN),abs(UmN)))/2;
 
+
+
+
+
+%%%%%%%%%%%%%%%
+dirx=(q1+qm1)/2;
+diry=(qN+qmN)/2;
+
+UxR=[Ux(1,:); Ux(1:end-1,:)];
+UxL=[Ux(2:end,:); Ux(end,:)];
+UyU=[Uy(:,1) Uy(:,1:end-1)];
+UyD=[Uy(:,2:end) Uy(:,end)];
+
+a=find(dirx>0);
+b=find(dirx<0);
+%Ux(a)=UxR(a);
+%Ux(b)=UxL(b);
+Ux(a)=(UxR(a)+Ux(a))/2;
+Ux(b)=(UxL(b)+Ux(b))/2;
+
+a=find(diry>0);
+b=find(diry<0);
+%Uy(a)=UyU(a);
+%Uy(b)=UyD(b);
+Uy(a)=(UyU(a)+Uy(a))/2;
+Uy(b)=(UyD(b)+Uy(b))/2;
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+% %%%%%%%%%%%%%%%
+% dirx=(q1+qm1)/2;
+% diry=(qN+qmN)/2;
+% 
+% for i=1:4
+% UxR=[Ux(1,:); Ux(1:end-1,:)];
+% UxL=[Ux(2:end,:); Ux(end,:)];
+% UyU=[Uy(:,1) Uy(:,1:end-1)];
+% UyD=[Uy(:,2:end) Uy(:,end)];
+% 
+% a=find(dirx>0);
+% b=find(dirx<0);
+% Ux(a)=UxR(a);
+% Ux(b)=UxL(b);
+% %Ux(a)=(UxR(a)+Ux(a))/2;
+% %Ux(b)=(UxL(b)+Ux(b))/2;
+% 
+% a=find(diry>0);
+% b=find(diry<0);
+% Uy(a)=UyU(a);
+% Uy(b)=UyD(b);
+% %Uy(a)=(UyU(a)+Uy(a))/2;
+% %Uy(b)=(UyD(b)+Uy(b))/2;
+% end
+% %%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+
 Ux(A>=10 & A<=19)=(q1(A>=10 & A<=19)+qm1(A>=10 & A<=19))/2./h(A>=10 & A<=19);
 Uy(A>=10 & A<=19)=(qN(A>=10 & A<=19)+qmN(A>=10 & A<=19))/2./h(A>=10 & A<=19);
 %  
@@ -281,6 +343,11 @@ Uy(A>=10 & A<=19)=(qN(A>=10 & A<=19)+qmN(A>=10 & A<=19))/2./h(A>=10 & A<=19);
 %%%%%%%%%%%%%%%%%%%
 %for transport
 Utr=sqrt(Ux.^2+Uy.^2);
+
+%Simulate delft3d that does not calculate flow where h<0.1
+if simulteflowDelft3d==1;
+Utr(h<=0.1)=0;
+end
 
 
 

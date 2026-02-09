@@ -35,6 +35,7 @@ Dcrbank=crbank/(dx^2)*dt;
 facQsbank=facQsbank/(dx^2)*dt;
 
 
+%only the bank creep is grid dependent (beacuase it is assumed the bank is mostly vertical, hence not easily discrtizeable)
 Dcrbank=Dcrbank*dx;
 facQsbank=facQsbank*dx;
 

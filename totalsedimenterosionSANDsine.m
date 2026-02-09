@@ -8,6 +8,7 @@ g=9.81;
 %U=2;
 %h=5;
 %MannS=0.015;
+MannS=MannS*0+0.02;
 
 %U=sqrt((U*pi/2).*UTref);
 %U=sqrt((U).*UTref);
@@ -21,6 +22,8 @@ g=9.81;
 Chezy=max(h,0.1).^(1/6)./MannS;
 
 U(h<=kro)=0;
+
+%%%UR(h<=0.1)=0;Already put into riverflowiter
 
 hlimC=0.01;%0.01;
 
@@ -58,8 +61,10 @@ Ceq_tide=0.05*UR.^4; %kg/m/
 Ceq_tide=Ceq_tide./max(hlimC,h)./(sqrt(g).*Chezy.^3*ss^2*d50)*rhos; %kg/m/   
 end
 
-Ceq_tide=Ceq_tide.*fTide;%
-%Ceq_tide=Ceq_tide.*max(0.1,fTide);%
+Ceq_tide=Ceq_tide.*fTide;%%this one NOV 2025
+
+
+
 
 % 
 % %van Rijn

@@ -48,7 +48,6 @@ Dyy=(Do*24*3600 +DiffS*Ttide/2.*(abs(Uy.*Uy))*(24*3600).^2)/(dx^2).*h;%.*h;%.*(h
 %Dxx(1:2,:)=0;Dyy(1:2,:)=0; %this one is the problem
 %Dxx(end-1:end,:)=0;Dyy(end-1:end,:)=0;
 
-%figure;imagesc(Dxx);pause
 
 % Dbase=(Do*24*3600)/(dx^2).*h;
 % qx=(q1+qm1)/2;
@@ -72,9 +71,9 @@ Dyy=(Do*24*3600 +DiffS*Ttide/2.*(abs(Uy.*Uy))*(24*3600).^2)/(dx^2).*h;%.*h;%.*(h
 
 
 
-Dxx(A>=10 & A<=19)=0;
-Dyy(A>=10 & A<=19)=0; %no tidal flux at the river mouth
-Dxx(rivermouthfront)=0;Dyy(rivermouthfront)=0; %no tidal flux at the river mouth
+%Dxx(A>=10 & A<=19)=0;
+%Dyy(A>=10 & A<=19)=0; %no tidal flux at the river mouth
+%Dxx(rivermouthfront)=0;Dyy(rivermouthfront)=0; %no tidal flux at the river mouth
 %the factor 24*3600 is used to convert the Ux and Uy from m/s to m/day
 
 %Dxx=Dxx./fTide;
